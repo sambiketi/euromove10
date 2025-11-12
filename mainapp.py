@@ -4,10 +4,10 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-# Load environment variables
+# --- Load environment variables ---
 load_dotenv()
 
-# Initialize Flask app
+# --- Initialize Flask app ---
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
@@ -17,7 +17,7 @@ raw_db_url = os.environ.get(
     "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
-# Fix Supabase URLs
+# Fix Supabase URLs for SQLAlchemy + psycopg
 if raw_db_url.startswith("postgres://"):
     raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
 elif raw_db_url.startswith("postgresql://") and "+psycopg" not in raw_db_url:
@@ -73,4 +73,57 @@ def book():
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
-        password = request.form.get('password
+        password = request.form.get('password')
+
+        admin = Admin.query.filter_by(username=username, password=password).first()
+        if admin:
+            session['admin'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash("Invalid credentials", "danger")
+    return render_template('admin_dashboard.html', login=True)
+
+@app.route('/admin/dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
+
+    if request.method == 'POST':
+        # Handle new post
+        if 'post_title' in request.form:
+            title = request.form.get('post_title')
+            content = request.form.get('post_content')
+            image_url = request.form.get('post_image')
+            post = Post(title=title, content=content, image_url=image_url)
+            db.session.add(post)
+            db.session.commit()
+            flash("Post added successfully", "success")
+        # Handle new workshop
+        if 'workshop_title' in request.form:
+            title = request.form.get('workshop_title')
+            description = request.form.get('workshop_content')
+            ws = Workshop(title=title, description=description)
+            db.session.add(ws)
+            db.session.commit()
+            flash("Workshop added successfully", "success")
+
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    return render_template('admin_dashboard.html', login=False, posts=posts, workshops=workshops)
+
+@app.route('/logout')
+def logout():
+    session.pop('admin', None)
+    return redirect(url_for('admin_login'))
+
+# --- TEST DATABASE CONNECTION ---
+with app.app_context():
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        print("✅ Database connection successful.")
+    except Exception as e:
+        print("❌ Database connection failed:", e)
+
+# --- RUN APP ---
+if __name__ == '__main__':
+    app.run(debug=True)
