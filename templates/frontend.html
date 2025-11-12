@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Euromove</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin:0; padding:0;
+    background: radial-gradient(circle, #c2f0c2 0%, #f0fbe0 100%);
+    color:#333;
+}
+header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 20px; background:#b5ddb5;
+}
+header h1 {
+    font-weight:bold; font-size:2em; margin:0;
+}
+nav { display:flex; gap:15px;}
+a { text-decoration:none; color:#333; font-weight:bold; }
+section { padding:20px; }
+.gallery { display:flex; flex-wrap:wrap; gap:10px; }
+.gallery img { width:200px; border-radius:10px; transition: transform .3s;}
+.gallery img:hover { transform: scale(1.05);}
+form { display:flex; flex-direction:column; max-width:300px; gap:10px;}
+button { background:#9cd69c; border:none; padding:10px; font-weight:bold; cursor:pointer; border-radius:5px;}
+</style>
+</head>
+<body>
+<header>
+    <h1>Euromove</h1>
+    <nav>
+        <a href="#workshops">Workshops</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#book">Book Now</a>
+        <a href="#contact">Contact</a>
+    </nav>
+</header>
+
+<section id="welcome">
+    <h2>Welcome to Euromove</h2>
+    <p>Helping Kenyans access opportunities in Europe!</p>
+</section>
+
+<section id="workshops">
+    <h2>Upcoming Workshops</h2>
+    {% for ws in workshops %}
+        <div>
+            <h3>{{ ws.title }}</h3>
+            <p>{{ ws.description }}</p>
+        </div>
+    {% endfor %}
+</section>
+
+<section id="gallery">
+    <h2>Gallery</h2>
+    <div class="gallery">
+        {% for post in posts %}
+            {% if post.image_url %}
+                <img src="{{ post.image_url }}" alt="{{ post.title }}">
+            {% endif %}
+        {% endfor %}
+    </div>
+</section>
+
+<section id="book">
+    <h2>Book Your Slot</h2>
+    <form method="POST" action="/book">
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="number" placeholder="Phone Number" required>
+        <button type="submit">Book Now</button>
+    </form>
+</section>
+
+<section id="contact">
+    <h2>Contact Us</h2>
+    <p>Phone: 0727823872</p>
+    <p>Email: info@euromove.international</p>
+</section>
+
+<script>
+window.addEventListener('scroll', () => {
+    document.querySelectorAll('section').forEach(sec => {
+        const rect = sec.getBoundingClientRect();
+        if(rect.top < window.innerHeight) sec.style.opacity = 1;
+    });
+});
+</script>
+
+</body>
+</html>

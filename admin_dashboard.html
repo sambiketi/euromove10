@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+body { font-family:Arial,sans-serif; margin:0; padding:0; background:#e0f5e0; color:#333; }
+.container { padding:20px; max-width:800px; margin:auto;}
+h2 { margin-top:0;}
+form { display:flex; flex-direction:column; gap:10px; margin-bottom:20px;}
+input, textarea { padding:8px; border-radius:5px; border:1px solid #999; }
+button { padding:10px; border:none; background:#9cd69c; font-weight:bold; border-radius:5px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="container">
+{% if login %}
+<h2>Admin Login</h2>
+<form method="POST">
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+</form>
+{% else %}
+<h2>Admin Dashboard</h2>
+<a href="/logout">Logout</a>
+
+<h3>Add New Post</h3>
+<form method="POST">
+    <input type="text" name="post_title" placeholder="Post Title" required>
+    <textarea name="post_content" placeholder="Post Content" required></textarea>
+    <input type="text" name="post_image" placeholder="Image URL">
+    <button type="submit">Add Post</button>
+</form>
+
+<h3>Add Workshop</h3>
+<form method="POST">
+    <input type="text" name="workshop_title" placeholder="Workshop Title" required>
+    <textarea name="workshop_content" placeholder="Workshop Description" required></textarea>
+    <button type="submit">Add Workshop</button>
+</form>
+
+<h3>Existing Posts</h3>
+<ul>
+{% for post in posts %}
+<li>{{ post.title }} - {{ post.date_posted.strftime('%Y-%m-%d') }}</li>
+{% endfor %}
+</ul>
+
+<h3>Existing Workshops</h3>
+<ul>
+{% for ws in workshops %}
+<li>{{ ws.title }} - {{ ws.date_posted.strftime('%Y-%m-%d') }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+</body>
+</html>
