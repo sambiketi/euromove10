@@ -12,12 +12,16 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
 # DATABASE CONFIG
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    "DATABASE_URL", 
-    "postgresql://postgres:password@localhost/euromove"
-)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+raw_db_url = os.environ.get("DATABASE_URL", "postgresql+psycopg://postgres:password@localhost/euromove")
+
+# Fix for Supabase URLs (convert old 'postgres://' prefix)
+if raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif raw_db_url.startswith("postgresql://") and "+psycopg" not in raw_db_url:
+    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+
 
 # MODELS
 class Workshop(db.Model):
