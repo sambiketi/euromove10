@@ -61,7 +61,7 @@ with app.app_context():
 def index():
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     posts = Post.query.order_by(Post.date_posted.desc()).all()
-    return render_template('frontend.html', workshops=workshops, posts=posts)
+    return render_template('frontend.html', workshops=workshops, posts=posts, datetime=datetime)
 
 # Booking route
 @app.route('/book', methods=['POST'])
