@@ -1,94 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Euromove</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    margin:0; padding:0;
-    background: radial-gradient(circle, #c2f0c2 0%, #f0fbe0 100%);
-    color:#333;
-}
-header {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:10px 20px; background:#b5ddb5;
-}
-header h1 {
-    font-weight:bold; font-size:2em; margin:0;
-}
-nav { display:flex; gap:15px;}
-a { text-decoration:none; color:#333; font-weight:bold; }
-section { padding:20px; }
-.gallery { display:flex; flex-wrap:wrap; gap:10px; }
-.gallery img { width:200px; border-radius:10px; transition: transform .3s;}
-.gallery img:hover { transform: scale(1.05);}
-form { display:flex; flex-direction:column; max-width:300px; gap:10px;}
-button { background:#9cd69c; border:none; padding:10px; font-weight:bold; cursor:pointer; border-radius:5px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Euromove | Empowering Kenyans to Move Forward</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background-color: #f4f7f3;
+            color: #333;
+        }
+
+        header {
+            background-color: #d4e6d1;
+            color: #2f4f2f;
+            text-align: center;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+
+        nav {
+            background-color: #2f4f2f;
+            color: white;
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 2rem 1rem;
+            background-color: #e9f3e4;
+        }
+
+        .hero h2 {
+            color: #2f4f2f;
+            font-size: 2rem;
+        }
+
+        .hero p {
+            max-width: 600px;
+            margin: 0.5rem auto;
+            color: #444;
+        }
+
+        .section {
+            padding: 2rem 1rem;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .section h3 {
+            color: #2f4f2f;
+            border-left: 4px solid #2f4f2f;
+            padding-left: 10px;
+        }
+
+        .posts, .workshops {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+
+        .card img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card h4 {
+            color: #2f4f2f;
+            margin-top: 0;
+        }
+
+        .card p {
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+
+        form input {
+            width: 100%;
+            padding: 0.7rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            width: 100%;
+            background-color: #2f4f2f;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        form button:hover {
+            background-color: #3b5f3b;
+        }
+
+        footer {
+            background-color: #d4e6d1;
+            text-align: center;
+            padding: 1rem;
+            color: #2f4f2f;
+            margin-top: 2rem;
+        }
+
+        .flash {
+            text-align: center;
+            padding: 1rem;
+            background-color: #e6ffe6;
+            color: #2f4f2f;
+            margin: 1rem auto;
+            max-width: 600px;
+            border: 1px solid #cce5cc;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-<header>
-    <h1>Euromove</h1>
+    <header>
+        <h1>Euromove</h1>
+        <p>Empowering Kenyans to Move Forward</p>
+    </header>
+
     <nav>
+        <a href="#">Home</a>
         <a href="#workshops">Workshops</a>
-        <a href="#gallery">Gallery</a>
-        <a href="#book">Book Now</a>
-        <a href="#contact">Contact</a>
+        <a href="#posts">News</a>
+        <a href="#book">Book</a>
     </nav>
-</header>
 
-<section id="welcome">
-    <h2>Welcome to Euromove</h2>
-    <p>Helping Kenyans access opportunities in Europe!</p>
-</section>
+    <section class="hero">
+        <h2>Your Gateway to Opportunities in Europe</h2>
+        <p>We connect Kenyans to real education, internships, and job opportunities across Europe. Let’s turn your aspirations into reality.</p>
+    </section>
 
-<section id="workshops">
-    <h2>Upcoming Workshops</h2>
-    {% for ws in workshops %}
-        <div>
-            <h3>{{ ws.title }}</h3>
-            <p>{{ ws.description }}</p>
-        </div>
-    {% endfor %}
-</section>
-
-<section id="gallery">
-    <h2>Gallery</h2>
-    <div class="gallery">
-        {% for post in posts %}
-            {% if post.image_url %}
-                <img src="{{ post.image_url }}" alt="{{ post.title }}">
-            {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
         {% endfor %}
-    </div>
-</section>
+      {% endif %}
+    {% endwith %}
 
-<section id="book">
-    <h2>Book Your Slot</h2>
-    <form method="POST" action="/book">
-        <input type="text" name="name" placeholder="Your Name" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="text" name="number" placeholder="Phone Number" required>
-        <button type="submit">Book Now</button>
-    </form>
-</section>
+    <section id="workshops" class="section">
+        <h3>Workshops</h3>
+        <div class="workshops">
+            {% for ws in workshops %}
+            <div class="card">
+                <h4>{{ ws.title }}</h4>
+                <p>{{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}</p>
+                <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
+            </div>
+            {% else %}
+            <p>No workshops yet.</p>
+            {% endfor %}
+        </div>
+    </section>
 
-<section id="contact">
-    <h2>Contact Us</h2>
-    <p>Phone: 0727823872</p>
-    <p>Email: info@euromove.international</p>
-</section>
+    <section id="posts" class="section">
+        <h3>Latest Posts</h3>
+        <div class="posts">
+            {% for post in posts %}
+            <div class="card">
+                {% if post.image_url %}
+                    <img src="{{ post.image_url }}" alt="{{ post.title }}">
+                {% endif %}
+                <h4>{{ post.title }}</h4>
+                <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
+            </div>
+            {% else %}
+            <p>No posts yet.</p>
+            {% endfor %}
+        </div>
+    </section>
 
-<script>
-window.addEventListener('scroll', () => {
-    document.querySelectorAll('section').forEach(sec => {
-        const rect = sec.getBoundingClientRect();
-        if(rect.top < window.innerHeight) sec.style.opacity = 1;
-    });
-});
-</script>
+    <section id="book" class="section">
+        <h3>Book a Consultation</h3>
+        <form method="POST" action="{{ url_for('book') }}">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="number" placeholder="Phone Number" required>
+            <button type="submit">Book Now</button>
+        </form>
+    </section>
 
+    <footer>
+        <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
+    </footer>
 </body>
 </html>
+
