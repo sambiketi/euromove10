@@ -153,3 +153,81 @@
             max-width: 600px;
             border: 1px solid #cce5cc;
             border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Euromove</h1>
+        <p>Empowering Kenyans to Move Forward</p>
+    </header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="#workshops">Workshops</a>
+        <a href="#posts">News</a>
+        <a href="#book">Book</a>
+    </nav>
+
+    <section class="hero">
+        <h2>Your Gateway to Opportunities in Europe</h2>
+        <p>We connect Kenyans to real education, internships, and job opportunities across Europe. Let’s turn your aspirations into reality.</p>
+    </section>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <section id="workshops" class="section">
+        <h3>Workshops</h3>
+        <div class="workshops">
+            {% for ws in workshops %}
+            <div class="card">
+                <h4>{{ ws.title }}</h4>
+                <p>{{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}</p>
+                <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
+            </div>
+            {% else %}
+            <p>No workshops yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="posts" class="section">
+        <h3>Latest Posts</h3>
+        <div class="posts">
+            {% for post in posts %}
+            <div class="card">
+                {% if post.image_url %}
+                    <img src="{{ post.image_url }}" alt="{{ post.title }}">
+                {% endif %}
+                <h4>{{ post.title }}</h4>
+                <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
+            </div>
+            {% else %}
+            <p>No posts yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="book" class="section">
+        <h3>Book a Consultation</h3>
+        <form method="POST" action="{{ url_for('book') }}">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="number" placeholder="Phone Number" required>
+            <button type="submit">Book Now</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
+    </footer>
+</body>
+</html>

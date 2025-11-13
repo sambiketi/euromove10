@@ -46,7 +46,7 @@ class Admin(db.Model):
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
 
-# --- INITIALIZE DATABASE AND CREATE DEFAULT ADMIN ---
+# --- INITIALIZE DATABASE AND DEFAULT ADMIN ---
 with app.app_context():
     db.create_all()
     if not Admin.query.filter_by(username="admin").first():
@@ -55,12 +55,15 @@ with app.app_context():
         db.session.commit()
 
 # --- ROUTES ---
+
+# Public home page
 @app.route('/')
 def index():
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     return render_template('frontend.html', workshops=workshops, posts=posts)
 
+# Booking route
 @app.route('/book', methods=['POST'])
 def book():
     name = request.form.get('name')
@@ -69,27 +72,28 @@ def book():
     flash(f'Thank you {name}, your slot has been booked!', 'success')
     return redirect(url_for('index'))
 
+# Admin login page
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-
         admin = Admin.query.filter_by(username=username, password=password).first()
         if admin:
             session['admin'] = True
             return redirect(url_for('admin_dashboard'))
         else:
             flash("Invalid credentials", "danger")
-    return render_template('admin_dashboard.html', login=True)
+    return render_template('admin_login.html')
 
+# Admin dashboard
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if not session.get('admin'):
         return redirect(url_for('admin_login'))
 
     if request.method == 'POST':
-        # Handle new post
+        # Add post
         if 'post_title' in request.form:
             title = request.form.get('post_title')
             content = request.form.get('post_content')
@@ -98,7 +102,7 @@ def admin_dashboard():
             db.session.add(post)
             db.session.commit()
             flash("Post added successfully", "success")
-        # Handle new workshop
+        # Add workshop
         if 'workshop_title' in request.form:
             title = request.form.get('workshop_title')
             description = request.form.get('workshop_content')
@@ -109,14 +113,15 @@ def admin_dashboard():
 
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
-    return render_template('admin_dashboard.html', login=False, posts=posts, workshops=workshops)
+    return render_template('admin_dashboard.html', posts=posts, workshops=workshops)
 
+# Logout route
 @app.route('/logout')
 def logout():
     session.pop('admin', None)
     return redirect(url_for('admin_login'))
 
-# --- TEST DATABASE CONNECTION ---
+# Test DB connection
 with app.app_context():
     try:
         db.session.execute(db.text("SELECT 1"))
@@ -124,6 +129,6 @@ with app.app_context():
     except Exception as e:
         print("❌ Database connection failed:", e)
 
-# --- RUN APP ---
+# Run app
 if __name__ == '__main__':
     app.run(debug=True)

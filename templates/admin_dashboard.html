@@ -1,60 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard</title>
-<style>
-body { font-family:Arial,sans-serif; margin:0; padding:0; background:#e0f5e0; color:#333; }
-.container { padding:20px; max-width:800px; margin:auto;}
-h2 { margin-top:0;}
-form { display:flex; flex-direction:column; gap:10px; margin-bottom:20px;}
-input, textarea { padding:8px; border-radius:5px; border:1px solid #999; }
-button { padding:10px; border:none; background:#9cd69c; font-weight:bold; border-radius:5px; cursor:pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Euromove Admin Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background-color: #f4f7f3;
+            color: #333;
+        }
+
+        header {
+            background-color: #2f4f2f;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        nav {
+            background-color: #d4e6d1;
+            padding: 0.5rem;
+            text-align: right;
+        }
+
+        nav a {
+            color: #2f4f2f;
+            text-decoration: none;
+            margin-left: 1rem;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        h2 {
+            color: #2f4f2f;
+        }
+
+        .flash {
+            text-align: center;
+            padding: 1rem;
+            background-color: #e6ffe6;
+            color: #2f4f2f;
+            margin: 1rem 0;
+            border: 1px solid #cce5cc;
+            border-radius: 5px;
+        }
+
+        form {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        form input, form textarea {
+            width: 100%;
+            padding: 0.7rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            background-color: #2f4f2f;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        form button:hover {
+            background-color: #3b5f3b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #d4e6d1;
+            color: #2f4f2f;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-{% if login %}
-<h2>Admin Login</h2>
-<form method="POST">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-</form>
-{% else %}
-<h2>Admin Dashboard</h2>
-<a href="/logout">Logout</a>
 
-<h3>Add New Post</h3>
-<form method="POST">
-    <input type="text" name="post_title" placeholder="Post Title" required>
-    <textarea name="post_content" placeholder="Post Content" required></textarea>
-    <input type="text" name="post_image" placeholder="Image URL">
-    <button type="submit">Add Post</button>
-</form>
+<header>
+    <h1>Euromove Admin Dashboard</h1>
+</header>
 
-<h3>Add Workshop</h3>
-<form method="POST">
-    <input type="text" name="workshop_title" placeholder="Workshop Title" required>
-    <textarea name="workshop_content" placeholder="Workshop Description" required></textarea>
-    <button type="submit">Add Workshop</button>
-</form>
-
-<h3>Existing Posts</h3>
-<ul>
-{% for post in posts %}
-<li>{{ post.title }} - {{ post.date_posted.strftime('%Y-%m-%d') }}</li>
-{% endfor %}
-</ul>
-
-<h3>Existing Workshops</h3>
-<ul>
-{% for ws in workshops %}
-<li>{{ ws.title }} - {{ ws.date_posted.strftime('%Y-%m-%d') }}</li>
-{% endfor %}
-</ul>
+{% if not login %}
+<nav>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</nav>
 {% endif %}
+
+<div class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if login %}
+    <!-- Admin Login Form -->
+    <h2>Login</h2>
+    <form method="POST" action="{{ url_for('admin_login') }}">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+    {% else %}
+    <!-- Add New Post -->
+    <h2>Add New Post</h2>
+    <form method="POST" action="{{ url_for('admin_dashboard') }}">
+        <input type="text" name="post_title" placeholder="Post Title" required>
+        <textarea name="post_content" placeholder="Post Content" rows="4" required></textarea>
+        <input type="text" name="post_image" placeholder="Image URL (optional)">
+        <button type="submit">Add Post</button>
+    </form>
+
+    <!-- Add New Workshop -->
+    <h2>Add New Workshop</h2>
+    <form method="POST" action="{{ url_for('admin_dashboard') }}">
+        <input type="text" name="workshop_title" placeholder="Workshop Title" required>
+        <textarea name="workshop_content" placeholder="Workshop Description" rows="4" required></textarea>
+        <button type="submit">Add Workshop</button>
+    </form>
+
+    <!-- Existing Posts -->
+    <h2>Existing Posts</h2>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Date Posted</th>
+        </tr>
+        {% for post in posts %}
+        <tr>
+            <td>{{ post.title }}</td>
+            <td>{{ post.date_posted.strftime('%Y-%m-%d') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2">No posts yet.</td></tr>
+        {% endfor %}
+    </table>
+
+    <!-- Existing Workshops -->
+    <h2>Existing Workshops</h2>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Date Posted</th>
+        </tr>
+        {% for ws in workshops %}
+        <tr>
+            <td>{{ ws.title }}</td>
+            <td>{{ ws.date_posted.strftime('%Y-%m-%d') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2">No workshops yet.</td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
 </div>
+
 </body>
 </html>
