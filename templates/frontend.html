@@ -1,233 +1,129 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euromove | Empowering Kenyans to Move Forward</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: "Poppins", sans-serif;
-            background-color: #f4f7f3;
-            color: #333;
-        }
+from dotenv import load_dotenv
+import os
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
-        header {
-            background-color: #d4e6d1;
-            color: #2f4f2f;
-            text-align: center;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+# --- Load environment variables ---
+load_dotenv()
 
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            letter-spacing: 1px;
-        }
+# --- Initialize Flask app ---
+app = Flask(__name__)
+app.secret_key = "supersecretkey"
 
-        nav {
-            background-color: #2f4f2f;
-            color: white;
-            display: flex;
-            justify-content: center;
-            padding: 0.5rem 0;
-        }
+# --- DATABASE CONFIG ---
+raw_db_url = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:password@localhost/euromove"
+)
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 1rem;
-            font-weight: 500;
-        }
+# Fix Supabase URLs for SQLAlchemy + psycopg
+if raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif raw_db_url.startswith("postgresql://") and "+psycopg" not in raw_db_url:
+    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-        nav a:hover {
-            text-decoration: underline;
-        }
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-        .hero {
-            text-align: center;
-            padding: 2rem 1rem;
-            background-color: #e9f3e4;
-        }
+# --- MODELS ---
+class Workshop(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150))
+    description = db.Column(db.Text)
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
 
-        .hero h2 {
-            color: #2f4f2f;
-            font-size: 2rem;
-        }
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150))
+    content = db.Column(db.Text)
+    image_url = db.Column(db.String(300))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
 
-        .hero p {
-            max-width: 600px;
-            margin: 0.5rem auto;
-            color: #444;
-        }
+class Admin(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True)
+    password = db.Column(db.String(50))
 
-        .section {
-            padding: 2rem 1rem;
-            max-width: 1000px;
-            margin: auto;
-        }
+# --- INITIALIZE DATABASE AND CREATE DEFAULT ADMIN ---
+with app.app_context():
+    db.create_all()
+    if not Admin.query.filter_by(username="admin").first():
+        admin = Admin(username="admin", password="password")
+        db.session.add(admin)
+        db.session.commit()
 
-        .section h3 {
-            color: #2f4f2f;
-            border-left: 4px solid #2f4f2f;
-            padding-left: 10px;
-        }
+# --- ROUTES ---
+@app.route('/')
+def index():
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    return render_template('frontend.html', workshops=workshops, posts=posts)
 
-        .posts, .workshops {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
+@app.route('/book', methods=['POST'])
+def book():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    number = request.form.get('number')
+    flash(f'Thank you {name}, your slot has been booked!', 'success')
+    return redirect(url_for('index'))
 
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            padding: 1rem;
-        }
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-        .card img {
-            max-width: 100%;
-            border-radius: 5px;
-            margin-bottom: 0.5rem;
-        }
+        admin = Admin.query.filter_by(username=username, password=password).first()
+        if admin:
+            session['admin'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash("Invalid credentials", "danger")
+    return render_template('admin_dashboard.html', login=True)
 
-        .card h4 {
-            color: #2f4f2f;
-            margin-top: 0;
-        }
+@app.route('/admin/dashboard', methods=['GET', 'POST'])
+def admin_dashboard():
+    if not session.get('admin'):
+        return redirect(url_for('admin_login'))
 
-        .card p {
-            color: #555;
-            font-size: 0.9rem;
-        }
+    if request.method == 'POST':
+        # Handle new post
+        if 'post_title' in request.form:
+            title = request.form.get('post_title')
+            content = request.form.get('post_content')
+            image_url = request.form.get('post_image')
+            post = Post(title=title, content=content, image_url=image_url)
+            db.session.add(post)
+            db.session.commit()
+            flash("Post added successfully", "success")
+        # Handle new workshop
+        if 'workshop_title' in request.form:
+            title = request.form.get('workshop_title')
+            description = request.form.get('workshop_content')
+            ws = Workshop(title=title, description=description)
+            db.session.add(ws)
+            db.session.commit()
+            flash("Workshop added successfully", "success")
 
-        form {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin: auto;
-        }
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    return render_template('admin_dashboard.html', login=False, posts=posts, workshops=workshops)
 
-        form input {
-            width: 100%;
-            padding: 0.7rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
+@app.route('/logout')
+def logout():
+    session.pop('admin', None)
+    return redirect(url_for('admin_login'))
 
-        form button {
-            width: 100%;
-            background-color: #2f4f2f;
-            color: white;
-            border: none;
-            padding: 0.8rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+# --- TEST DATABASE CONNECTION ---
+with app.app_context():
+    try:
+        db.session.execute(db.text("SELECT 1"))
+        print("✅ Database connection successful.")
+    except Exception as e:
+        print("❌ Database connection failed:", e)
 
-        form button:hover {
-            background-color: #3b5f3b;
-        }
-
-        footer {
-            background-color: #d4e6d1;
-            text-align: center;
-            padding: 1rem;
-            color: #2f4f2f;
-            margin-top: 2rem;
-        }
-
-        .flash {
-            text-align: center;
-            padding: 1rem;
-            background-color: #e6ffe6;
-            color: #2f4f2f;
-            margin: 1rem auto;
-            max-width: 600px;
-            border: 1px solid #cce5cc;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Euromove</h1>
-        <p>Empowering Kenyans to Move Forward</p>
-    </header>
-
-    <nav>
-        <a href="#">Home</a>
-        <a href="#workshops">Workshops</a>
-        <a href="#posts">News</a>
-        <a href="#book">Book</a>
-    </nav>
-
-    <section class="hero">
-        <h2>Your Gateway to Opportunities in Europe</h2>
-        <p>We connect Kenyans to real education, internships, and job opportunities across Europe. Let’s turn your aspirations into reality.</p>
-    </section>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <section id="workshops" class="section">
-        <h3>Workshops</h3>
-        <div class="workshops">
-            {% for ws in workshops %}
-            <div class="card">
-                <h4>{{ ws.title }}</h4>
-                <p>{{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}</p>
-                <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
-            </div>
-            {% else %}
-            <p>No workshops yet.</p>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section id="posts" class="section">
-        <h3>Latest Posts</h3>
-        <div class="posts">
-            {% for post in posts %}
-            <div class="card">
-                {% if post.image_url %}
-                    <img src="{{ post.image_url }}" alt="{{ post.title }}">
-                {% endif %}
-                <h4>{{ post.title }}</h4>
-                <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
-                <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
-            </div>
-            {% else %}
-            <p>No posts yet.</p>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section id="book" class="section">
-        <h3>Book a Consultation</h3>
-        <form method="POST" action="{{ url_for('book') }}">
-            <input type="text" name="name" placeholder="Full Name" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="text" name="number" placeholder="Phone Number" required>
-            <button type="submit">Book Now</button>
-        </form>
-    </section>
-
-    <footer>
-        <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
-    </footer>
-</body>
-</html>
-
+# --- RUN APP ---
+if __name__ == '__main__':
+    app.run(debug=True)
