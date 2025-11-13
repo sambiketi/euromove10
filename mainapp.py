@@ -32,14 +32,14 @@ class Workshop(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     description = db.Column(db.Text)
-    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    date_posted = db.Column(db.DateTime, default=datetime.now)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     content = db.Column(db.Text)
     image_url = db.Column(db.String(300))
-    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    date_posted = db.Column(db.DateTime, default=datetime.now)
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
