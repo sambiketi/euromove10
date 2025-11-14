@@ -54,7 +54,7 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-# --- ROUTES ---
+# --- ROUTES ---v
 
 # Public home page
 @app.route('/')
@@ -113,7 +113,7 @@ def admin_dashboard():
 
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
-    return render_template('admin_dashboard.html', posts=posts, workshops=workshops)
+    return render_template('admin_dashboard.html', posts=posts, workshops=workshops, datetime=datetime)
 
 # Logout route
 @app.route('/logout')

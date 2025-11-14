@@ -154,6 +154,20 @@
             border: 1px solid #cce5cc;
             border-radius: 5px;
         }
+
+        .read-more-btn {
+            background: none;
+            border: none;
+            color: #2f4f2f;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 0.5rem;
+        }
+
+        .read-more-btn:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -183,13 +197,19 @@
       {% endif %}
     {% endwith %}
 
+    <!-- Workshops -->
     <section id="workshops" class="section">
         <h3>Workshops</h3>
         <div class="workshops">
             {% for ws in workshops %}
             <div class="card">
                 <h4>{{ ws.title }}</h4>
-                <p>{{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}</p>
+                <p id="ws-{{ ws.id }}">
+                    {{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}
+                </p>
+                {% if ws.description|length > 150 %}
+                    <button class="read-more-btn" onclick="toggleContent('ws-{{ ws.id }}','{{ ws.description|escapejs }}', this)">Read More</button>
+                {% endif %}
                 <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
             </div>
             {% else %}
@@ -198,6 +218,7 @@
         </div>
     </section>
 
+    <!-- Posts -->
     <section id="posts" class="section">
         <h3>Latest Posts</h3>
         <div class="posts">
@@ -207,7 +228,12 @@
                     <img src="{{ post.image_url }}" alt="{{ post.title }}">
                 {% endif %}
                 <h4>{{ post.title }}</h4>
-                <p>{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                <p id="post-{{ post.id }}">
+                    {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+                </p>
+                {% if post.content|length > 200 %}
+                    <button class="read-more-btn" onclick="toggleContent('post-{{ post.id }}','{{ post.content|escapejs }}', this)">Read More</button>
+                {% endif %}
                 <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
             </div>
             {% else %}
@@ -216,6 +242,7 @@
         </div>
     </section>
 
+    <!-- Booking -->
     <section id="book" class="section">
         <h3>Book a Consultation</h3>
         <form method="POST" action="{{ url_for('book') }}">
@@ -229,5 +256,19 @@
     <footer>
         <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
     </footer>
+
+    <script>
+        function toggleContent(id, fullText, btn) {
+            const el = document.getElementById(id);
+            if (btn.innerText === "Read More") {
+                el.innerText = fullText;
+                btn.innerText = "Show Less";
+            } else {
+                const truncated = fullText.substring(0, id.startsWith('ws') ? 150 : 200);
+                el.innerText = truncated + "...";
+                btn.innerText = "Read More";
+            }
+        }
+    </script>
 </body>
 </html>
