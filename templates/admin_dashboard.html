@@ -11,105 +11,31 @@
             background-color: #f4f7f3;
             color: #333;
         }
-
         header {
             background-color: #2f4f2f;
             color: white;
             text-align: center;
             padding: 1rem 0;
         }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
+        header h1 { margin: 0; font-size: 1.8rem; }
         nav {
             background-color: #d4e6d1;
             padding: 0.5rem;
             text-align: right;
         }
-
-        nav a {
-            color: #2f4f2f;
-            text-decoration: none;
-            margin-left: 1rem;
-            font-weight: bold;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        h2 {
-            color: #2f4f2f;
-        }
-
-        .flash {
-            text-align: center;
-            padding: 1rem;
-            background-color: #e6ffe6;
-            color: #2f4f2f;
-            margin: 1rem 0;
-            border: 1px solid #cce5cc;
-            border-radius: 5px;
-        }
-
-        form {
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-
-        form input, form textarea {
-            width: 100%;
-            padding: 0.7rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        form button {
-            background-color: #2f4f2f;
-            color: white;
-            border: none;
-            padding: 0.8rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        form button:hover {
-            background-color: #3b5f3b;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2rem;
-        }
-
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-
-        th, td {
-            padding: 0.5rem;
-            text-align: left;
-        }
-
-        th {
-            background-color: #d4e6d1;
-            color: #2f4f2f;
-        }
+        nav a { color: #2f4f2f; text-decoration: none; margin-left: 1rem; font-weight: bold; }
+        nav a:hover { text-decoration: underline; }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        h2 { color: #2f4f2f; }
+        .flash { text-align: center; padding: 1rem; background-color: #e6ffe6; color: #2f4f2f; margin: 1rem 0; border: 1px solid #cce5cc; border-radius: 5px; }
+        form { background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        form input, form textarea { width: 100%; padding: 0.7rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 5px; }
+        form button { background-color: #2f4f2f; color: white; border: none; padding: 0.8rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        form button:hover { background-color: #3b5f3b; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        table, th, td { border: 1px solid #ccc; }
+        th, td { padding: 0.5rem; text-align: left; }
+        th { background-color: #d4e6d1; color: #2f4f2f; }
     </style>
 </head>
 <body>
@@ -165,12 +91,12 @@
     <table>
         <tr>
             <th>Title</th>
-            <th>Date Posted</th>
+            <th>Date Posted (UTC)</th>
         </tr>
         {% for post in posts %}
         <tr>
             <td>{{ post.title }}</td>
-            <td>{{ post.date_posted.strftime('%Y-%m-%d') }}</td>
+            <td>{{ post.date_posted.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') }} UTC</td>
         </tr>
         {% else %}
         <tr><td colspan="2">No posts yet.</td></tr>
@@ -182,18 +108,19 @@
     <table>
         <tr>
             <th>Title</th>
-            <th>Date Posted</th>
+            <th>Date Posted (UTC)</th>
         </tr>
         {% for ws in workshops %}
         <tr>
             <td>{{ ws.title }}</td>
-            <td>{{ ws.date_posted.strftime('%Y-%m-%d') }}</td>
+            <td>{{ ws.date_posted.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') }} UTC</td>
         </tr>
         {% else %}
         <tr><td colspan="2">No workshops yet.</td></tr>
         {% endfor %}
     </table>
     {% endif %}
+
 </div>
 
 </body>
