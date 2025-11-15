@@ -204,11 +204,11 @@
             {% for ws in workshops %}
             <div class="card">
                 <h4>{{ ws.title }}</h4>
-                <p id="ws-{{ ws.id }}">
+                <p id="ws-{{ ws.id }}" class="ws-text" data-full="{{ ws.description }}">
                     {{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}
                 </p>
                 {% if ws.description|length > 150 %}
-                    <button class="read-more-btn" onclick="toggleContent('ws-{{ ws.id }}','{{ ws.description|escapejs }}', this)">Read More</button>
+                    <button class="read-more-btn" onclick="toggleContent(this, 'ws-{{ ws.id }}')">Read More</button>
                 {% endif %}
                 <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
             </div>
@@ -228,11 +228,11 @@
                     <img src="{{ post.image_url }}" alt="{{ post.title }}">
                 {% endif %}
                 <h4>{{ post.title }}</h4>
-                <p id="post-{{ post.id }}">
+                <p id="post-{{ post.id }}" class="post-text" data-full="{{ post.content }}">
                     {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
                 </p>
                 {% if post.content|length > 200 %}
-                    <button class="read-more-btn" onclick="toggleContent('post-{{ post.id }}','{{ post.content|escapejs }}', this)">Read More</button>
+                    <button class="read-more-btn" onclick="toggleContent(this, 'post-{{ post.id }}')">Read More</button>
                 {% endif %}
                 <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
             </div>
@@ -257,16 +257,21 @@
         <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
     </footer>
 
+    <!-- JS for Read More functionality -->
     <script>
-        function toggleContent(id, fullText, btn) {
-            const el = document.getElementById(id);
-            if (btn.innerText === "Read More") {
-                el.innerText = fullText;
-                btn.innerText = "Show Less";
+        function toggleContent(button, id) {
+            const p = document.getElementById(id);
+            const fullText = p.getAttribute('data-full');
+            const limit = id.startsWith('ws') ? 150 : 200;
+
+            if (p.getAttribute('data-expanded') === "true") {
+                p.innerText = fullText.substring(0, limit) + "...";
+                p.setAttribute('data-expanded', "false");
+                button.innerText = "Read More";
             } else {
-                const truncated = fullText.substring(0, id.startsWith('ws') ? 150 : 200);
-                el.innerText = truncated + "...";
-                btn.innerText = "Read More";
+                p.innerText = fullText;
+                p.setAttribute('data-expanded', "true");
+                button.innerText = "Show Less";
             }
         }
     </script>
