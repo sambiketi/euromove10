@@ -171,6 +171,7 @@
     </style>
 </head>
 <body>
+
     <header>
         <h1>Euromove</h1>
         <p>Empowering Kenyans to Move Forward</p>
@@ -188,7 +189,7 @@
         <p>We connect Kenyans to real education, internships, and job opportunities across Europe. Let’s turn your aspirations into reality.</p>
     </section>
 
-    <!-- Flash messages -->
+    <!-- Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -204,13 +205,25 @@
             {% for ws in workshops %}
             <div class="card">
                 <h4>{{ ws.title }}</h4>
+
                 <p id="ws-{{ ws.id }}" class="ws-text" data-full="{{ ws.description }}">
                     {{ ws.description[:150] }}{% if ws.description|length > 150 %}...{% endif %}
                 </p>
+
                 {% if ws.description|length > 150 %}
-                    <button class="read-more-btn" onclick="toggleContent(this, 'ws-{{ ws.id }}')">Read More</button>
+                <button class="read-more-btn" onclick="toggleContent(this, 'ws-{{ ws.id }}')">Read More</button>
                 {% endif %}
-                <small><em>Posted on {{ ws.date_posted.strftime('%Y-%m-%d') }}</em></small>
+
+                <!-- SAFE DATETIME HERE -->
+                <small><em>
+                    Posted on 
+                    {% if ws.date_posted %}
+                        {{ ws.date_posted.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </em></small>
+
             </div>
             {% else %}
             <p>No workshops yet.</p>
@@ -222,23 +235,39 @@
     <section id="posts" class="section">
         <h3>Latest Posts</h3>
         <div class="posts">
+
             {% for post in posts %}
             <div class="card">
+
                 {% if post.image_url %}
                     <img src="{{ post.image_url }}" alt="{{ post.title }}">
                 {% endif %}
+
                 <h4>{{ post.title }}</h4>
+
                 <p id="post-{{ post.id }}" class="post-text" data-full="{{ post.content }}">
                     {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
                 </p>
+
                 {% if post.content|length > 200 %}
-                    <button class="read-more-btn" onclick="toggleContent(this, 'post-{{ post.id }}')">Read More</button>
+                <button class="read-more-btn" onclick="toggleContent(this, 'post-{{ post.id }}')">Read More</button>
                 {% endif %}
-                <small><em>Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</em></small>
+
+                <!-- SAFE DATETIME HERE -->
+                <small><em>
+                    Posted on 
+                    {% if post.date_posted %}
+                        {{ post.date_posted.strftime('%Y-%m-%d') }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </em></small>
+
             </div>
             {% else %}
             <p>No posts yet.</p>
             {% endfor %}
+
         </div>
     </section>
 
@@ -257,7 +286,7 @@
         <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
     </footer>
 
-    <!-- JS for Read More functionality -->
+    <!-- JS -->
     <script>
         function toggleContent(button, id) {
             const p = document.getElementById(id);
@@ -275,5 +304,6 @@
             }
         }
     </script>
+
 </body>
 </html>
