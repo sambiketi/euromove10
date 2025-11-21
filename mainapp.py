@@ -16,14 +16,12 @@ app.secret_key = "supersecretkey"
 # --- DATABASE CONFIG ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:password@localhost/euromove"
+    "postgresql://postgres:password@localhost/euromove"
 )
 
-# Fix Supabase URLs for SQLAlchemy + psycopg
-if raw_db_url.startswith("postgres://"):
-    raw_db_url = "postgresql+psycopg://" + raw_db_url[len("postgres://"):]
-elif raw_db_url.startswith("postgresql://") and "+psycopg" not in raw_db_url:
-    raw_db_url = "postgresql+psycopg://" + raw_db_url[len("postgresql://"):]
+# Fix Supabase URLs for SQLAlchemy + psycopg (Render compatible)
+if raw_db_url and raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
 
 # Apply to Flask app
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
@@ -162,6 +160,7 @@ def book():
         flash('Please fill in all fields.', 'danger')
     
     return redirect(url_for('index'))
+
 # Gallery route
 @app.route('/gallery')
 def gallery():
@@ -172,6 +171,7 @@ def gallery():
 def privacy():
     admin = Admin.query.first()
     return render_template('privacy.html', admin=admin, datetime=datetime)
+
 # --- ADMIN LOGIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
