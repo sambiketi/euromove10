@@ -2,33 +2,134 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - EuroMove</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; }
-        .container { max-width: 400px; margin: 100px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
-        input { width: 100%; padding: 10px; margin: 10px 0; }
-        button { padding: 10px 20px; background: #4CAF50; color: #fff; border: none; cursor: pointer; }
-        .flash { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .flash.success { background: #d4edda; color: #155724; }
-        .flash.danger { background: #f8d7da; color: #721c24; }
+        :root {
+            --cream: #fef7e5;
+            --light-brown: #d7ccc8;
+            --green: #2e7d32;
+            --dark-green: #1b5e20;
+            --brown: #8d6e63;
+            --dark-brown: #5d4037;
+            --text-dark: #4e342e;
+            --text-light: #795548;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(141, 110, 99, 0.2);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--light-brown);
+        }
+        .login-container h1 {
+            text-align: center;
+            color: var(--dark-brown);
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-brown);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--cream);
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--green);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--green), var(--dark-green));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, var(--dark-green), var(--green));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+        }
+        .flash.success {
+            background: #e8f5e8;
+            color: var(--dark-green);
+            border-left-color: var(--green);
+        }
+        .flash.danger {
+            background: #ffebee;
+            color: #c62828;
+            border-left-color: #f44336;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Admin Login</h2>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+    <div class="login-container">
+        <h1>Admin Login</h1>
+        
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
         <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn">Login</button>
         </form>
     </div>
 </body>

@@ -2,75 +2,448 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - EuroMove</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; }
-        header { background: #4CAF50; color: #fff; padding: 15px; text-align: center; }
-        .container { max-width: 900px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
-        form { margin-bottom: 30px; }
-        input, textarea { width: 100%; padding: 10px; margin: 5px 0; }
-        button { padding: 10px 20px; background: #4CAF50; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
-        .flash { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .flash.success { background: #d4edda; color: #155724; }
-        .flash.danger { background: #f8d7da; color: #721c24; }
-        h3 { margin-top: 40px; }
-        .item { border-bottom: 1px solid #ccc; padding: 10px 0; }
+        :root {
+            --cream: #fef7e5;
+            --light-brown: #d7ccc8;
+            --green: #2e7d32;
+            --dark-green: #1b5e20;
+            --brown: #8d6e63;
+            --dark-brown: #5d4037;
+            --text-dark: #4e342e;
+            --text-light: #795548;
+            --success: #388e3c;
+            --danger: #d32f2f;
+            --warning: #f57c00;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--cream);
+            color: var(--text-dark);
+        }
+        .header {
+            background: linear-gradient(135deg, var(--green), var(--dark-green));
+            color: white;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        }
+        .header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
+            border: 1px solid var(--light-brown);
+            backdrop-filter: blur(10px);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-brown);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: var(--cream);
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--green);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--green), var(--dark-green));
+            color: white;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--dark-green), var(--green));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #d32f2f, #b71c1c);
+            color: white;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #b71c1c, #d32f2f);
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #388e3c, #2e7d32);
+            color: white;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(141, 110, 99, 0.1);
+        }
+        .table th,
+        .table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-brown);
+        }
+        .table th {
+            background: linear-gradient(135deg, var(--green), var(--dark-green));
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table tr:hover {
+            background: var(--cream);
+        }
+        .nav-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--light-brown);
+            background: white;
+            border-radius: 10px 10px 0 0;
+            padding: 0 10px;
+            box-shadow: 0 2px 8px rgba(141, 110, 99, 0.1);
+        }
+        .nav-tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+        .nav-tab.active {
+            border-bottom: 3px solid var(--green);
+            color: var(--green);
+            font-weight: 600;
+        }
+        .nav-tab:hover:not(.active) {
+            color: var(--dark-brown);
+            background: var(--cream);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .flash-messages {
+            margin-bottom: 25px;
+        }
+        .flash {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+            font-weight: 500;
+        }
+        .flash.success {
+            background: #e8f5e8;
+            color: var(--dark-green);
+            border-left-color: var(--green);
+        }
+        .flash.danger {
+            background: #ffebee;
+            color: #c62828;
+            border-left-color: #f44336;
+        }
+        .logout-btn {
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        .table img {
+            border-radius: 4px;
+            border: 1px solid var(--light-brown);
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Admin Dashboard</h1>
-        <a href="{{ url_for('admin_logout') }}" style="color:#fff; text-decoration: none;">Logout</a>
-    </header>
+    <div class="header">
+        <h1>🌍 EuroMove Admin Dashboard</h1>
+        <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
+    </div>
 
     <div class="container">
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('contact')">📞 Contact Info</button>
+            <button class="nav-tab" onclick="showTab('posts')">📝 Manage Posts</button>
+            <button class="nav-tab" onclick="showTab('workshops')">🎯 Manage Workshops</button>
+            <button class="nav-tab" onclick="showTab('bookings')">📋 View Bookings</button>
+        </div>
 
-        <!-- Add Post -->
-        <h3>Add New Post</h3>
-        <form method="POST">
-            <input type="text" name="post_title" placeholder="Post Title" required>
-            <textarea name="post_content" placeholder="Post Content" rows="4" required></textarea>
-            <input type="text" name="post_image" placeholder="Image URL (optional)">
-            <button type="submit">Add Post</button>
-        </form>
+        <!-- Contact Info Tab -->
+        <div id="contact" class="tab-content active">
+            <div class="dashboard-section">
+                <h2>📞 Contact Information</h2>
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="whatsapp_number">WhatsApp Number:</label>
+                        <input type="text" id="whatsapp_number" name="whatsapp_number" 
+                               value="{{ admin.whatsapp_number if admin else '+1234567890' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_address">Email Address:</label>
+                        <input type="email" id="email_address" name="email_address" 
+                               value="{{ admin.email_address if admin else 'admin@example.com' }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Contact Info</button>
+                </form>
+            </div>
+        </div>
 
-        <!-- Add Workshop -->
-        <h3>Add New Workshop</h3>
-        <form method="POST">
-            <input type="text" name="workshop_title" placeholder="Workshop Title" required>
-            <textarea name="workshop_content" placeholder="Workshop Description" rows="4" required></textarea>
-            <button type="submit">Add Workshop</button>
-        </form>
+        <!-- Posts Tab -->
+        <div id="posts" class="tab-content">
+            <div class="dashboard-section">
+                <h2>📝 Add New Post</h2>
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="post_title">Post Title:</label>
+                        <input type="text" id="post_title" name="post_title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="post_content">Content:</label>
+                        <textarea id="post_content" name="post_content" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="post_format">Content Format:</label>
+                        <select id="post_format" name="post_format">
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="post_image">Image URL (optional):</label>
+                        <input type="url" id="post_image" name="post_image" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Post</button>
+                </form>
+            </div>
 
-        <!-- Existing Posts -->
-        <h3>Existing Posts</h3>
-        {% for post in posts %}
-            <div class="item">
-                <strong>{{ post.title }}</strong> <em>({{ post.date_posted.strftime("%Y-%m-%d %H:%M") }})</em>
-                <p>{{ post.content }}</p>
-                {% if post.image_url %}
-                    <img src="{{ post.image_url }}" alt="Post Image" style="max-width:200px;">
+            <div class="dashboard-section">
+                <h2>📰 Existing Posts</h2>
+                {% if posts %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Format</th>
+                            <th>Date Posted</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                        <tr>
+                            <td><strong>{{ post.title }}</strong></td>
+                            <td><span style="background: var(--cream); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ post.content_format|upper }}</span></td>
+                            <td>{{ post.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if post.image_url %}
+                                <img src="{{ post.image_url }}" alt="Post image" style="max-width: 50px; max-height: 50px;">
+                                {% else %}
+                                <span style="color: var(--text-light);">No image</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No posts found.</p>
                 {% endif %}
             </div>
-        {% endfor %}
+        </div>
 
-        <!-- Existing Workshops -->
-        <h3>Existing Workshops</h3>
-        {% for ws in workshops %}
-            <div class="item">
-                <strong>{{ ws.title }}</strong> <em>({{ ws.date_posted.strftime("%Y-%m-%d %H:%M") }})</em>
-                <p>{{ ws.description }}</p>
+        <!-- Workshops Tab -->
+        <div id="workshops" class="tab-content">
+            <div class="dashboard-section">
+                <h2>🎯 Add New Workshop</h2>
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="workshop_title">Workshop Title:</label>
+                        <input type="text" id="workshop_title" name="workshop_title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workshop_content">Description:</label>
+                        <textarea id="workshop_content" name="workshop_content" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="workshop_format">Content Format:</label>
+                        <select id="workshop_format" name="workshop_format">
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workshop_image">Image URL (optional):</label>
+                        <input type="url" id="workshop_image" name="workshop_image" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Workshop</button>
+                </form>
             </div>
-        {% endfor %}
 
+            <div class="dashboard-section">
+                <h2>📅 Existing Workshops</h2>
+                {% if workshops %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Format</th>
+                            <th>Date Posted</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for workshop in workshops %}
+                        <tr>
+                            <td><strong>{{ workshop.title }}</strong></td>
+                            <td><span style="background: var(--cream); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ workshop.content_format|upper }}</span></td>
+                            <td>{{ workshop.date_posted.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if workshop.image_url %}
+                                <img src="{{ workshop.image_url }}" alt="Workshop image" style="max-width: 50px; max-height: 50px;">
+                                {% else %}
+                                <span style="color: var(--text-light);">No image</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No workshops found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="bookings" class="tab-content">
+            <div class="dashboard-section">
+                <h2>📋 Workshop Bookings</h2>
+                {% if bookings %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Date Booked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td><strong>{{ booking.name }}</strong></td>
+                            <td>{{ booking.email }}</td>
+                            <td>{{ booking.phone }}</td>
+                            <td>{{ booking.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No bookings found.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
 </html>
