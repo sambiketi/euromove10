@@ -13,27 +13,17 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# --- DATABASE CONFIG - Force psycopg3 ---
+# --- DATABASE CONFIG - Compatible approach ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
-    "postgresql+psycopg://postgres:password@localhost/euromove"
+    "postgresql://postgres:password@localhost/euromove"  # Use simple postgresql://
 )
 
-# Force psycopg3 dialect
-if raw_db_url.startswith("postgres://"):
-    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
-elif raw_db_url.startswith("postgresql://"):
-    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+# Fix Heroku-style URLs
+if raw_db_url and raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
 
-# Remove any psycopg2 references
-raw_db_url = raw_db_url.replace("postgresql+psycopg2://", "postgresql+psycopg://")
-
-# Add SSL requirement
-if "sslmode" not in raw_db_url:
-    separator = "&" if "?" in raw_db_url else "?"
-    raw_db_url += f"{separator}sslmode=require"
-
-print(f"🔧 Database URL configured for psycopg3")
+print(f"🔧 Using database URL: {raw_db_url.split('@')[0]}@...")
 
 # Configure Flask-SQLAlchemy
 app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
@@ -41,15 +31,14 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 300,
-    "connect_args": {
-        "sslmode": "require"
-    }
 }
 
+# Initialize db without forcing psycopg3 in the URL
 db = SQLAlchemy(app)
 
 # --- MODELS ---
 class Workshop(db.Model):
+    __tablename__ = 'workshop'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     description = db.Column(db.Text)
@@ -75,6 +64,7 @@ class Workshop(db.Model):
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 class Post(db.Model):
+    __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text)
@@ -100,6 +90,7 @@ class Post(db.Model):
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 class Booking(db.Model):
+    __tablename__ = 'booking'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
@@ -107,38 +98,12 @@ class Booking(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Admin(db.Model):
+    __tablename__ = 'admin'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
-
-# --- VERIFY PSYCOPG3 AFTER MODELS ARE DEFINED ---
-def verify_psycopg3():
-    """Verify psycopg3 is being used - called after app context is available"""
-    try:
-        # Test the actual database connection
-        with app.app_context():
-            engine = db.engine
-            driver_name = engine.dialect.driver
-            print(f"🔧 SQLAlchemy dialect driver: {driver_name}")
-            
-            # Test connection
-            result = db.session.execute(db.text("SELECT version()"))
-            db_version = result.scalar()
-            print(f"✅ Database connected successfully!")
-            print(f"📊 Database: {db_version.split(',')[0]}")
-            
-            # Check for psycopg2 contamination
-            try:
-                import psycopg2
-                print("⚠️  WARNING: psycopg2 is installed but should not be used")
-            except ImportError:
-                print("✅ No psycopg2 detected")
-                
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        # Don't raise here - let the app try to start anyway
 
 # --- INITIALIZE DATABASE ---
 with app.app_context():
@@ -153,21 +118,22 @@ with app.app_context():
             )
             db.session.add(admin)
             db.session.commit()
-            print("✅ Default admin user created")
-        
-        # Verify psycopg3 after database is set up
-        verify_psycopg3()
-        
+            print("✅ Database and default admin created successfully")
     except Exception as e:
-        print(f"⚠️  Database initialization warning: {e}")
-        # Continue anyway - the app might work with connection pooling
+        print(f"❌ Database initialization error: {e}")
 
-# --- ALL YOUR ROUTES (keep exactly as they were) ---
+# --- ROUTES ---
 @app.route('/')
 def index():
-    latest_post = Post.query.order_by(Post.date_posted.desc()).first()
-    upcoming_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).limit(3).all()
-    admin = Admin.query.first()
+    try:
+        latest_post = Post.query.order_by(Post.date_posted.desc()).first()
+        upcoming_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).limit(3).all()
+        admin = Admin.query.first()
+    except Exception as e:
+        print(f"Database query error: {e}")
+        latest_post = None
+        upcoming_workshops = []
+        admin = None
     
     return render_template('index.html', 
                          latest_post=latest_post, 
@@ -177,12 +143,20 @@ def index():
 
 @app.route('/posts')
 def posts():
-    all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+    try:
+        all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+    except Exception as e:
+        print(f"Posts query error: {e}")
+        all_posts = []
     return render_template('posts.html', posts=all_posts, datetime=datetime)
 
 @app.route('/workshops')
 def workshops():
-    all_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    try:
+        all_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    except Exception as e:
+        print(f"Workshops query error: {e}")
+        all_workshops = []
     return render_template('workshops.html', workshops=all_workshops, datetime=datetime)
 
 @app.route('/book', methods=['POST'])
@@ -219,12 +193,15 @@ def admin_login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
-        admin = Admin.query.filter_by(username=username, password=password).first()
-        if admin:
-            session['admin_logged_in'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash("Invalid username or password", "danger")
+        try:
+            admin = Admin.query.filter_by(username=username, password=password).first()
+            if admin:
+                session['admin_logged_in'] = True
+                return redirect(url_for('admin_dashboard'))
+            else:
+                flash("Invalid username or password", "danger")
+        except Exception as e:
+            flash("Database error during login", "danger")
     return render_template('admin_login.html')
 
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
@@ -232,24 +209,34 @@ def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    admin = Admin.query.first()
+    try:
+        admin = Admin.query.first()
+        posts = Post.query.order_by(Post.date_posted.desc()).all()
+        workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+        bookings = Booking.query.order_by(Booking.created_at.desc()).all()
+    except Exception as e:
+        print(f"Admin dashboard query error: {e}")
+        admin = None
+        posts = []
+        workshops = []
+        bookings = []
 
     if request.method == 'POST':
-        if 'whatsapp_number' in request.form:
-            admin.whatsapp_number = request.form.get('whatsapp_number', '').strip()
-            admin.email_address = request.form.get('email_address', '').strip()
-            db.session.commit()
-            flash("Contact information updated successfully", "success")
-        elif 'post_title' in request.form:
-            title = request.form.get('post_title', '').strip()
-            content = request.form.get('post_content', '').strip()
-            content_format = request.form.get('post_format', 'html')
-            image_url = request.form.get('post_image', '').strip() or None
+        try:
+            if 'whatsapp_number' in request.form:
+                admin.whatsapp_number = request.form.get('whatsapp_number', '').strip()
+                admin.email_address = request.form.get('email_address', '').strip()
+                db.session.commit()
+                flash("Contact information updated successfully", "success")
+            elif 'post_title' in request.form:
+                title = request.form.get('post_title', '').strip()
+                content = request.form.get('post_content', '').strip()
+                content_format = request.form.get('post_format', 'html')
+                image_url = request.form.get('post_image', '').strip() or None
 
-            if not title or not content:
-                flash("Post title and content are required", "danger")
-            else:
-                try:
+                if not title or not content:
+                    flash("Post title and content are required", "danger")
+                else:
                     post = Post(
                         title=title, 
                         content=content, 
@@ -259,19 +246,15 @@ def admin_dashboard():
                     db.session.add(post)
                     db.session.commit()
                     flash("Post added successfully", "success")
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f"Error adding post: {e}", "danger")
-        elif 'workshop_title' in request.form:
-            title = request.form.get('workshop_title', '').strip()
-            description = request.form.get('workshop_content', '').strip()
-            content_format = request.form.get('workshop_format', 'html')
-            image_url = request.form.get('workshop_image', '').strip() or None
+            elif 'workshop_title' in request.form:
+                title = request.form.get('workshop_title', '').strip()
+                description = request.form.get('workshop_content', '').strip()
+                content_format = request.form.get('workshop_format', 'html')
+                image_url = request.form.get('workshop_image', '').strip() or None
 
-            if not title or not description:
-                flash("Workshop title and description are required", "danger")
-            else:
-                try:
+                if not title or not description:
+                    flash("Workshop title and description are required", "danger")
+                else:
                     ws = Workshop(
                         title=title, 
                         description=description,
@@ -281,13 +264,9 @@ def admin_dashboard():
                     db.session.add(ws)
                     db.session.commit()
                     flash("Workshop added successfully", "success")
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f"Error adding workshop: {e}", "danger")
-
-    posts = Post.query.order_by(Post.date_posted.desc()).all()
-    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
-    bookings = Booking.query.order_by(Booking.created_at.desc()).all()
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error: {e}", "danger")
 
     return render_template('admin_dashboard.html', 
                          posts=posts, 
@@ -301,6 +280,5 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
 
-# --- RUN APP ---
 if __name__ == '__main__':
     app.run(debug=True)
