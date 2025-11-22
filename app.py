@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import markdown
 import bleach
+import time
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 # --- Load environment variables ---
 load_dotenv()
@@ -13,32 +16,68 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# --- DATABASE CONFIG - Compatible approach ---
+# --- DATABASE CONFIG FOR PSYCOPG3 WITH SSL & WAKE-UP ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:password@localhost/euromove"  # Use simple postgresql://
+    "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
-# Fix Heroku-style URLs
+# Fix Heroku-style URLs to use psycopg3 dialect
 if raw_db_url and raw_db_url.startswith("postgres://"):
-    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
 
-print(f"🔧 Using database URL: {raw_db_url.split('@')[0]}@...")
+# Ensure we're using psycopg3 dialect
+if raw_db_url.startswith("postgresql://") and "+psycopg" not in raw_db_url:
+    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-# Configure Flask-SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_pre_ping": True,
-    "pool_recycle": 300,
+# Add SSL requirements for Supabase/Render
+if "sslmode" not in raw_db_url:
+    separator = "&" if "?" in raw_db_url else "?"
+    raw_db_url += f"{separator}sslmode=require"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_size': 5,
+    'max_overflow': 10,
+    'connect_args': {
+        'sslmode': 'require',
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5
+    }
 }
 
-# Initialize db without forcing psycopg3 in the URL
 db = SQLAlchemy(app)
+
+# --- DATABASE WAKE-UP LOGIC FOR RENDER ---
+def wake_up_database():
+    """Wait for database to become available (Render cold start issue)"""
+    max_retries = 10
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            with app.app_context():
+                db.session.execute(text("SELECT 1"))
+                print("✅ Database is awake and responsive")
+                return True
+        except OperationalError as e:
+            if attempt < max_retries - 1:
+                print(f"⏳ Database not ready yet (attempt {attempt + 1}/{max_retries}), retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                print(f"❌ Database failed to wake up after {max_retries} attempts: {e}")
+                return False
+        except Exception as e:
+            print(f"❌ Unexpected error during database wake-up: {e}")
+            return False
 
 # --- MODELS ---
 class Workshop(db.Model):
-    __tablename__ = 'workshop'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     description = db.Column(db.Text)
@@ -64,7 +103,6 @@ class Workshop(db.Model):
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 class Post(db.Model):
-    __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text)
@@ -90,7 +128,6 @@ class Post(db.Model):
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 class Booking(db.Model):
-    __tablename__ = 'booking'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
@@ -98,31 +135,34 @@ class Booking(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Admin(db.Model):
-    __tablename__ = 'admin'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
 
-# --- INITIALIZE DATABASE ---
+# --- INITIALIZE DATABASE WITH WAKE-UP ---
 with app.app_context():
-    try:
-        db.create_all()
-        if not Admin.query.filter_by(username="admin").first():
-            admin = Admin(
-                username="admin", 
-                password="password",
-                whatsapp_number="+1234567890",
-                email_address="admin@example.com"
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("✅ Database and default admin created successfully")
-    except Exception as e:
-        print(f"❌ Database initialization error: {e}")
+    # Wake up database first
+    if wake_up_database():
+        try:
+            db.create_all()
+            if not Admin.query.filter_by(username="admin").first():
+                admin = Admin(
+                    username="admin", 
+                    password="password",
+                    whatsapp_number="+1234567890",
+                    email_address="admin@example.com"
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("✅ Database initialized successfully")
+        except Exception as e:
+            print(f"❌ Database initialization failed: {e}")
+    else:
+        print("⚠️  Database not available, skipping initialization")
 
-# --- ROUTES ---
+# --- ROUTES WITH ERROR HANDLING ---
 @app.route('/')
 def index():
     try:
@@ -130,7 +170,7 @@ def index():
         upcoming_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).limit(3).all()
         admin = Admin.query.first()
     except Exception as e:
-        print(f"Database query error: {e}")
+        print(f"Database error in index: {e}")
         latest_post = None
         upcoming_workshops = []
         admin = None
@@ -146,7 +186,7 @@ def posts():
     try:
         all_posts = Post.query.order_by(Post.date_posted.desc()).all()
     except Exception as e:
-        print(f"Posts query error: {e}")
+        print(f"Database error in posts: {e}")
         all_posts = []
     return render_template('posts.html', posts=all_posts, datetime=datetime)
 
@@ -155,7 +195,7 @@ def workshops():
     try:
         all_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     except Exception as e:
-        print(f"Workshops query error: {e}")
+        print(f"Database error in workshops: {e}")
         all_workshops = []
     return render_template('workshops.html', workshops=all_workshops, datetime=datetime)
 
@@ -173,6 +213,7 @@ def book():
             flash(f'Thank you {name}, your slot has been booked! We will contact you soon.', 'success')
         except Exception as e:
             db.session.rollback()
+            print(f"Booking error: {e}")
             flash('Sorry, there was an error processing your booking. Please try again.', 'danger')
     else:
         flash('Please fill in all fields.', 'danger')
@@ -185,7 +226,11 @@ def gallery():
 
 @app.route('/privacy')
 def privacy():
-    admin = Admin.query.first()
+    try:
+        admin = Admin.query.first()
+    except Exception as e:
+        print(f"Database error in privacy: {e}")
+        admin = None
     return render_template('privacy.html', admin=admin, datetime=datetime)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -201,6 +246,7 @@ def admin_login():
             else:
                 flash("Invalid username or password", "danger")
         except Exception as e:
+            print(f"Login error: {e}")
             flash("Database error during login", "danger")
     return render_template('admin_login.html')
 
@@ -215,7 +261,7 @@ def admin_dashboard():
         workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
         bookings = Booking.query.order_by(Booking.created_at.desc()).all()
     except Exception as e:
-        print(f"Admin dashboard query error: {e}")
+        print(f"Admin dashboard error: {e}")
         admin = None
         posts = []
         workshops = []
@@ -266,6 +312,7 @@ def admin_dashboard():
                     flash("Workshop added successfully", "success")
         except Exception as e:
             db.session.rollback()
+            print(f"Admin dashboard POST error: {e}")
             flash(f"Error: {e}", "danger")
 
     return render_template('admin_dashboard.html', 
