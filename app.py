@@ -20,12 +20,12 @@ import time
 # --- DATABASE CONFIG ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:password@localhost/euromove"
+    "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
 # Fix deprecated postgres:// → postgresql://
 if raw_db_url.startswith("postgres://"):
-    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
 
 # Enforce SSL for Supabase/Render
 if "sslmode" not in raw_db_url:
@@ -90,9 +90,9 @@ class Workshop(db.Model):
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150))
+    title = db.Column(db.String(150),nullable=False)
     content = db.Column(db.Text)
-    content_format = db.Column(db.String(10), default='html')  # 'html' or 'markdown'
+    content_format = db.Column(db.String(10), default='html',nullable=False)  # 'html' or 'markdown'
     image_url = db.Column(db.String(300))
     date_posted = db.Column(db.DateTime, default=datetime.now)
     
