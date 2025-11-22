@@ -13,71 +13,95 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
-import time
-
-# --- DATABASE CONFIG ---
+# --- FORCE PSYCOPG3 & BLOCK PSYCOPG2 CONFIG ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
-# Fix deprecated postgres:// → postgresql://
+# Force psycopg3 dialect and block any psycopg2 fallback
 if raw_db_url.startswith("postgres://"):
     raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif raw_db_url.startswith("postgresql://"):
+    # Replace plain postgresql:// with postgresql+psycopg:// to force psycopg3
+    raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-# Enforce SSL for Supabase/Render
+# Remove any existing psycopg2 references
+raw_db_url = raw_db_url.replace("postgresql+psycopg2://", "postgresql+psycopg://")
+
+# Add SSL requirement for production
 if "sslmode" not in raw_db_url:
-    raw_db_url += "&sslmode=require" if "?" in raw_db_url else "?sslmode=require"
+    separator = "&" if "?" in raw_db_url else "?"
+    raw_db_url += f"{separator}sslmode=require"
 
-# Create SQLAlchemy engine using psycopg3 driver
-engine = create_engine(
-    raw_db_url,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    future=True
-)
+print(f"🔧 Final Database URL: {raw_db_url.split('@')[0]}@...")  # Log without password
 
-# Database wake-up logic (Render problem fix)
-for _ in range(10):
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        print("✅ Database is awake.")
-        break
-    except OperationalError:
-        print("⏳ Waiting for database to wake up...")
-        time.sleep(2)
-else:
-    print("❌ Database did not respond after multiple attempts.")
-
-# Attach engine to Flask SQLAlchemy
+# Configure Flask-SQLAlchemy to use psycopg3
 app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "connect_args": {
+        "sslmode": "require"
+    }
+}
+
+# Import and verify we're using psycopg3, not psycopg2
+try:
+    # Try to import psycopg3 specifically
+    import psycopg
+    print(f"✅ psycopg3 version: {psycopg.__version__}")
+    
+    # Explicitly block psycopg2 if it somehow gets imported
+    try:
+        import psycopg2
+        raise RuntimeError("🚫 PSYCOPG2 DETECTED! Remove psycopg2 from your environment")
+    except ImportError:
+        print("✅ psycopg2 successfully blocked")
+        
+except ImportError as e:
+    raise RuntimeError("🚫 psycopg3 not available. Install with: pip install psycopg[binary]")
 
 db = SQLAlchemy(app)
 
+# --- Verify psycopg3 is actually being used ---
+with app.app_context():
+    try:
+        # Test connection and verify driver
+        engine = db.engine
+        driver_name = engine.dialect.driver
+        print(f"🔧 SQLAlchemy dialect driver: {driver_name}")
+        
+        if driver_name != "psycopg":
+            raise RuntimeError(f"🚫 Wrong driver detected: {driver_name}. Expected 'psycopg' for psycopg3")
+        
+        # Test database connection
+        result = db.session.execute(db.text("SELECT version()"))
+        db_version = result.scalar()
+        print(f"✅ Database connected successfully using psycopg3")
+        print(f"📊 Database: {db_version.split(',')[0]}")
+        
+    except Exception as e:
+        print(f"❌ Database verification failed: {e}")
+        raise
 
 # --- MODELS ---
 class Workshop(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150))
     description = db.Column(db.Text)
-    content_format = db.Column(db.String(10), default='html')  # 'html' or 'markdown'
+    content_format = db.Column(db.String(10), default='html')
     image_url = db.Column(db.String(300))
     date_posted = db.Column(db.DateTime, default=datetime.now)
     
     def rendered_content(self):
-        """Convert content to HTML based on format"""
         if self.content_format == 'markdown':
             html = markdown.markdown(self.description, extensions=['extra', 'fenced_code'])
             return self.sanitize_html(html)
         return self.sanitize_html(self.description)
     
     def sanitize_html(self, html_content):
-        """Sanitize HTML to prevent XSS attacks"""
         allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'b', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
                        'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre', 'span', 'div']
         allowed_attrs = {
@@ -90,21 +114,19 @@ class Workshop(db.Model):
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(150),nullable=False)
+    title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text)
-    content_format = db.Column(db.String(10), default='html',nullable=False)  # 'html' or 'markdown'
+    content_format = db.Column(db.String(10), default='html', nullable=False)
     image_url = db.Column(db.String(300))
     date_posted = db.Column(db.DateTime, default=datetime.now)
     
     def rendered_content(self):
-        """Convert content to HTML based on format"""
         if self.content_format == 'markdown':
             html = markdown.markdown(self.content, extensions=['extra', 'fenced_code'])
             return self.sanitize_html(html)
         return self.sanitize_html(self.content)
     
     def sanitize_html(self, html_content):
-        """Sanitize HTML to prevent XSS attacks"""
         allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'b', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
                        'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre', 'span', 'div']
         allowed_attrs = {
@@ -141,17 +163,13 @@ with app.app_context():
         )
         db.session.add(admin)
         db.session.commit()
+        print("✅ Default admin user created")
 
-# --- ROUTES ---
-
-# Public home page
+# --- ROUTES (all your existing routes remain the same) ---
 @app.route('/')
 def index():
-    # Get latest post for dynamic content
     latest_post = Post.query.order_by(Post.date_posted.desc()).first()
-    # Get upcoming workshops (next 7 days)
     upcoming_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).limit(3).all()
-    # Get admin contact info
     admin = Admin.query.first()
     
     return render_template('index.html', 
@@ -160,19 +178,16 @@ def index():
                          admin=admin,
                          datetime=datetime)
 
-# Posts page
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
     return render_template('posts.html', posts=all_posts, datetime=datetime)
 
-# Workshops page
 @app.route('/workshops')
 def workshops():
     all_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     return render_template('workshops.html', workshops=all_workshops, datetime=datetime)
 
-# Booking route
 @app.route('/book', methods=['POST'])
 def book():
     name = request.form.get('name', '').strip()
@@ -193,18 +208,15 @@ def book():
     
     return redirect(url_for('index'))
 
-# Gallery route
 @app.route('/gallery')
 def gallery():
     return render_template('gallery.html', datetime=datetime)
 
-# Privacy Policy route
 @app.route('/privacy')
 def privacy():
     admin = Admin.query.first()
     return render_template('privacy.html', admin=admin, datetime=datetime)
 
-# --- ADMIN LOGIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -218,7 +230,6 @@ def admin_login():
             flash("Invalid username or password", "danger")
     return render_template('admin_login.html')
 
-# --- ADMIN DASHBOARD ---
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if not session.get('admin_logged_in'):
@@ -227,14 +238,11 @@ def admin_dashboard():
     admin = Admin.query.first()
 
     if request.method == 'POST':
-        # Update contact info
         if 'whatsapp_number' in request.form:
             admin.whatsapp_number = request.form.get('whatsapp_number', '').strip()
             admin.email_address = request.form.get('email_address', '').strip()
             db.session.commit()
             flash("Contact information updated successfully", "success")
-
-        # Add Post
         elif 'post_title' in request.form:
             title = request.form.get('post_title', '').strip()
             content = request.form.get('post_content', '').strip()
@@ -257,8 +265,6 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding post: {e}", "danger")
-
-        # Add Workshop
         elif 'workshop_title' in request.form:
             title = request.form.get('workshop_title', '').strip()
             description = request.form.get('workshop_content', '').strip()
@@ -282,7 +288,6 @@ def admin_dashboard():
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
 
-    # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     bookings = Booking.query.order_by(Booking.created_at.desc()).all()
@@ -294,19 +299,10 @@ def admin_dashboard():
                          admin=admin,
                          datetime=datetime)
 
-# --- LOGOUT ---
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
-
-# --- TEST DB CONNECTION ---
-with app.app_context():
-    try:
-        db.session.execute(text("SELECT 1"))
-        print("✅ Database connection successful.")
-    except Exception as e:
-        print("❌ Database connection failed:", e)
 
 # --- RUN APP ---
 if __name__ == '__main__':
