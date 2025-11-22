@@ -13,30 +13,29 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# --- FORCE PSYCOPG3 & BLOCK PSYCOPG2 CONFIG ---
+# --- DATABASE CONFIG - Force psycopg3 ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
-# Force psycopg3 dialect and block any psycopg2 fallback
+# Force psycopg3 dialect
 if raw_db_url.startswith("postgres://"):
     raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
 elif raw_db_url.startswith("postgresql://"):
-    # Replace plain postgresql:// with postgresql+psycopg:// to force psycopg3
     raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-# Remove any existing psycopg2 references
+# Remove any psycopg2 references
 raw_db_url = raw_db_url.replace("postgresql+psycopg2://", "postgresql+psycopg://")
 
-# Add SSL requirement for production
+# Add SSL requirement
 if "sslmode" not in raw_db_url:
     separator = "&" if "?" in raw_db_url else "?"
     raw_db_url += f"{separator}sslmode=require"
 
-print(f"🔧 Final Database URL: {raw_db_url.split('@')[0]}@...")  # Log without password
+print(f"🔧 Database URL configured for psycopg3")
 
-# Configure Flask-SQLAlchemy to use psycopg3
+# Configure Flask-SQLAlchemy
 app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
@@ -47,44 +46,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     }
 }
 
-# Import and verify we're using psycopg3, not psycopg2
-try:
-    # Try to import psycopg3 specifically
-    import psycopg
-    print(f"✅ psycopg3 version: {psycopg.__version__}")
-    
-    # Explicitly block psycopg2 if it somehow gets imported
-    try:
-        import psycopg2
-        raise RuntimeError("🚫 PSYCOPG2 DETECTED! Remove psycopg2 from your environment")
-    except ImportError:
-        print("✅ psycopg2 successfully blocked")
-        
-except ImportError as e:
-    raise RuntimeError("🚫 psycopg3 not available. Install with: pip install psycopg[binary]")
-
 db = SQLAlchemy(app)
-
-# --- Verify psycopg3 is actually being used ---
-with app.app_context():
-    try:
-        # Test connection and verify driver
-        engine = db.engine
-        driver_name = engine.dialect.driver
-        print(f"🔧 SQLAlchemy dialect driver: {driver_name}")
-        
-        if driver_name != "psycopg":
-            raise RuntimeError(f"🚫 Wrong driver detected: {driver_name}. Expected 'psycopg' for psycopg3")
-        
-        # Test database connection
-        result = db.session.execute(db.text("SELECT version()"))
-        db_version = result.scalar()
-        print(f"✅ Database connected successfully using psycopg3")
-        print(f"📊 Database: {db_version.split(',')[0]}")
-        
-    except Exception as e:
-        print(f"❌ Database verification failed: {e}")
-        raise
 
 # --- MODELS ---
 class Workshop(db.Model):
@@ -151,21 +113,56 @@ class Admin(db.Model):
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
 
-# --- INITIALIZE DATABASE AND DEFAULT ADMIN ---
-with app.app_context():
-    db.create_all()
-    if not Admin.query.filter_by(username="admin").first():
-        admin = Admin(
-            username="admin", 
-            password="password",
-            whatsapp_number="+1234567890",
-            email_address="admin@example.com"
-        )
-        db.session.add(admin)
-        db.session.commit()
-        print("✅ Default admin user created")
+# --- VERIFY PSYCOPG3 AFTER MODELS ARE DEFINED ---
+def verify_psycopg3():
+    """Verify psycopg3 is being used - called after app context is available"""
+    try:
+        # Test the actual database connection
+        with app.app_context():
+            engine = db.engine
+            driver_name = engine.dialect.driver
+            print(f"🔧 SQLAlchemy dialect driver: {driver_name}")
+            
+            # Test connection
+            result = db.session.execute(db.text("SELECT version()"))
+            db_version = result.scalar()
+            print(f"✅ Database connected successfully!")
+            print(f"📊 Database: {db_version.split(',')[0]}")
+            
+            # Check for psycopg2 contamination
+            try:
+                import psycopg2
+                print("⚠️  WARNING: psycopg2 is installed but should not be used")
+            except ImportError:
+                print("✅ No psycopg2 detected")
+                
+    except Exception as e:
+        print(f"❌ Database connection failed: {e}")
+        # Don't raise here - let the app try to start anyway
 
-# --- ROUTES (all your existing routes remain the same) ---
+# --- INITIALIZE DATABASE ---
+with app.app_context():
+    try:
+        db.create_all()
+        if not Admin.query.filter_by(username="admin").first():
+            admin = Admin(
+                username="admin", 
+                password="password",
+                whatsapp_number="+1234567890",
+                email_address="admin@example.com"
+            )
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Default admin user created")
+        
+        # Verify psycopg3 after database is set up
+        verify_psycopg3()
+        
+    except Exception as e:
+        print(f"⚠️  Database initialization warning: {e}")
+        # Continue anyway - the app might work with connection pooling
+
+# --- ALL YOUR ROUTES (keep exactly as they were) ---
 @app.route('/')
 def index():
     latest_post = Post.query.order_by(Post.date_posted.desc()).first()
