@@ -13,20 +13,52 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
+import time
+
 # --- DATABASE CONFIG ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
     "postgresql://postgres:password@localhost/euromove"
 )
 
-# Fix Supabase URLs for SQLAlchemy + psycopg (Render compatible)
-if raw_db_url and raw_db_url.startswith("postgres://"):
+# Fix deprecated postgres:// → postgresql://
+if raw_db_url.startswith("postgres://"):
     raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
 
-# Apply to Flask app
-app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Enforce SSL for Supabase/Render
+if "sslmode" not in raw_db_url:
+    raw_db_url += "&sslmode=require" if "?" in raw_db_url else "?sslmode=require"
+
+# Create SQLAlchemy engine using psycopg3 driver
+engine = create_engine(
+    raw_db_url,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    future=True
+)
+
+# Database wake-up logic (Render problem fix)
+for _ in range(10):
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        print("✅ Database is awake.")
+        break
+    except OperationalError:
+        print("⏳ Waiting for database to wake up...")
+        time.sleep(2)
+else:
+    print("❌ Database did not respond after multiple attempts.")
+
+# Attach engine to Flask SQLAlchemy
+app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
+
 
 # --- MODELS ---
 class Workshop(db.Model):
@@ -271,7 +303,7 @@ def admin_logout():
 # --- TEST DB CONNECTION ---
 with app.app_context():
     try:
-        db.session.execute(db.text("SELECT 1"))
+        db.session.execute(text("SELECT 1"))
         print("✅ Database connection successful.")
     except Exception as e:
         print("❌ Database connection failed:", e)
