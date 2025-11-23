@@ -19,35 +19,34 @@ app.secret_key = "supersecretkey"
 # --- DATABASE CONFIG WITH SSL & CONNECTION POOLING ---
 raw_db_url = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:password@localhost/euromove"
+    "postgresql+psycopg://postgres:password@localhost/euromove"
 )
 
 # Fix Heroku-style URLs
 if raw_db_url.startswith("postgres://"):
-    raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
 
-# Add SSL requirements for Supabase/Render
+# Enforce SSL (Supabase/Render)
 if "sslmode" not in raw_db_url:
     separator = "&" if "?" in raw_db_url else "?"
     raw_db_url += f"{separator}sslmode=require"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 300,
     'pool_size': 5,
     'max_overflow': 10,
+    # psycopg3 uses sslmode directly; keepalives supported via connect_args
     'connect_args': {
-        'sslmode': 'require',
-        'keepalives': 1,
-        'keepalives_idle': 30,
-        'keepalives_interval': 10,
-        'keepalives_count': 5
+        'sslmode': 'require'
     }
 }
 
 db = SQLAlchemy(app)
+
 
 # --- DATABASE WAKE-UP LOGIC FOR RENDER ---
 def wake_up_database():
