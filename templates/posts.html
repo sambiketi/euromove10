@@ -8,8 +8,8 @@
     
     <div class="posts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem;">
         {% for post in posts %}
-        <a href="{{ url_for('post_detail', slug=post.slug) }}" style="text-decoration: none; color: inherit;">
-            <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
+        <a href="{{ url_for('posts') }}#{{ post.slug }}" style="text-decoration: none; color: inherit;">
+            <div id="{{ post.slug }}" class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
                 {% if post.image_url %}
                 <img src="{{ post.image_url }}" alt="{{ post.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
                 {% endif %}
