@@ -179,13 +179,28 @@ def index():
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
+
+    # Ensure each post has a slug for internal linking
+    for post in all_posts:
+        if not hasattr(post, 'slug') or not post.slug:
+            post.slug = post.title.replace(" ", "_")  # simple slug
+
     return render_template('posts.html', posts=all_posts, datetime=datetime)
+
 
 # Workshops page
 @app.route('/workshops')
 def workshops():
     all_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+
+    # Ensure each workshop has a slug for internal linking
+    for workshop in all_workshops:
+        if not hasattr(workshop, 'slug') or not workshop.slug:
+            workshop.slug = workshop.title.replace(" ", "_")  # simple slug
+
     return render_template('workshops.html', workshops=all_workshops, datetime=datetime)
+
+
 
 # Booking route
 @app.route('/book', methods=['POST'])
