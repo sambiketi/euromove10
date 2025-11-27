@@ -175,19 +175,40 @@ def index():
                          admin=admin,
                          datetime=datetime)
 
-# Posts page
+# Individual post detail page
+@app.route('/posts/<slug>')
+def post_detail(slug):
+    post = Post.query.filter_by(slug=slug).first_or_404()
+    return render_template('post_detail.html', post=post)
+
+# Posts listing page (updated)
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
-
-    # Ensure each post has a slug for internal linking
+    
+    # Generate slugs for posts that don't have them
     for post in all_posts:
-        if not hasattr(post, 'slug') or not post.slug:
-            post.slug = post.title.replace(" ", "_")  # simple slug
+        if not post.slug:
+            # Create URL-friendly slug
+            slug = post.title.lower().replace(" ", "-").replace("&", "and")
+            # Remove special characters and multiple hyphens
+            slug = ''.join(c for c in slug if c.isalnum() or c == '-')
+            slug = re.sub(r'-+', '-', slug)  # Replace multiple hyphens with single
+            post.slug = slug
 
     return render_template('posts.html', posts=all_posts, datetime=datetime)
 
-
+@app.route('/posts/<slug>')
+def post_detail(slug):
+    post = Post.query.filter_by(slug=slug).first_or_404()
+    
+    # Get related posts (same category or recent posts)
+    related_posts = Post.query.filter(
+        Post.slug != slug,  # Exclude current post
+        Post.id != post.id
+    ).order_by(Post.date_posted.desc()).limit(3).all()
+    
+    return render_template('post_detail.html', post=post, related_posts=related_posts)
 # Workshops page
 @app.route('/workshops')
 def workshops():
