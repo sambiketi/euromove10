@@ -176,16 +176,8 @@ def index():
                          admin=admin,
                          datetime=datetime)
 
-# Individual post detail page
-@app.route('/posts/<slug>')
-def post_detail(slug):
-    post = Post.query.filter_by(slug=slug).first_or_404()
-    return render_template('post_detail.html', post=post)
-
-
-
-# Individual post detail page
-@app.route('/posts/<slug>')
+# Individual post detail page - ADD endpoint name
+@app.route('/posts/<slug>', endpoint='post_detail_page')
 def post_detail(slug):
     post = Post.query.filter_by(slug=slug).first_or_404()
     return render_template('post_detail.html', post=post)
@@ -206,7 +198,10 @@ def posts():
             post.slug = slug
 
     return render_template('posts.html', posts=all_posts, datetime=datetime)
-    
+
+
+
+
 # Workshops page
 @app.route('/workshops')
 def workshops():
