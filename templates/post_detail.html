@@ -4,12 +4,10 @@
 
 {% block content %}
 <article style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
-    <!-- Back button -->
     <a href="{{ url_for('posts') }}" style="color: var(--green); text-decoration: none; font-weight: 500; margin-bottom: 2rem; display: inline-block;">
         ← Back to all posts
     </a>
 
-    <!-- Post content -->
     <h1 style="color: var(--dark-green); margin-bottom: 1rem;">{{ post.title }}</h1>
     
     <div style="color: var(--text-light); margin-bottom: 2rem;">
@@ -21,10 +19,9 @@
     {% endif %}
 
     <div style="line-height: 1.8; color: var(--text-dark); font-size: 1.1rem;">
-        {{ post.content|replace('\n', '<br>')|safe }}
+        {{ post.rendered_content()|safe }}
     </div>
 
-    <!-- Back button at bottom -->
     <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--light-brown);">
         <a href="{{ url_for('posts') }}" style="color: var(--green); text-decoration: none; font-weight: 500;">
             ← Back to all posts

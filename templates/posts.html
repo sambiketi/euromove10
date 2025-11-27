@@ -6,22 +6,18 @@
 <section style="margin: 2rem 0;">
     <h1 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">News & Posts</h1>
     
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem;">
+    <div class="posts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem;">
         {% for post in posts %}
         <a href="{{ url_for('post_detail', post_id=post.id) }}" style="text-decoration: none; color: inherit;">
-            <div style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
+            <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
                 {% if post.image_url %}
-                <img src="{{ post.image_url }}" alt="{{ post.title }}" style="width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
+                <img src="{{ post.image_url }}" alt="{{ post.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
                 {% endif %}
                 
                 <h3 style="color: var(--dark-green); margin-top: 0;">{{ post.title }}</h3>
 
-                <div style="color: var(--text-dark); line-height: 1.6;">
-                    {% if post.content|length > 150 %}
-                        {{ post.content[:150] }}...
-                    {% else %}
-                        {{ post.content }}
-                    {% endif %}
+                <div class="post-content" style="color: var(--text-dark); line-height: 1.6;">
+                    {{ post.rendered_content()|safe }}
                 </div>
 
                 <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-brown);">
