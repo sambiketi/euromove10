@@ -4,77 +4,31 @@
 
 {% block content %}
 <article style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
-    {# Back to posts link #}
-    <div style="margin-bottom: 2rem;">
+    <!-- Back button -->
+    <a href="{{ url_for('posts') }}" style="color: var(--green); text-decoration: none; font-weight: 500; margin-bottom: 2rem; display: inline-block;">
+        ← Back to all posts
+    </a>
+
+    <!-- Post content -->
+    <h1 style="color: var(--dark-green); margin-bottom: 1rem;">{{ post.title }}</h1>
+    
+    <div style="color: var(--text-light); margin-bottom: 2rem;">
+        <em>Posted on {{ post.date_posted.strftime('%B %d, %Y') if post.date_posted else 'Unknown date' }}</em>
+    </div>
+
+    {% if post.image_url %}
+    <img src="{{ post.image_url }}" alt="{{ post.title }}" style="width: 100%; border-radius: 12px; margin-bottom: 2rem;">
+    {% endif %}
+
+    <div style="line-height: 1.8; color: var(--text-dark); font-size: 1.1rem;">
+        {{ post.content|replace('\n', '<br>')|safe }}
+    </div>
+
+    <!-- Back button at bottom -->
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--light-brown);">
         <a href="{{ url_for('posts') }}" style="color: var(--green); text-decoration: none; font-weight: 500;">
             ← Back to all posts
         </a>
     </div>
-
-    {# Post header #}
-    <header style="margin-bottom: 2rem;">
-        <h1 style="color: var(--dark-green); margin-bottom: 1rem; font-size: 2.5rem;">{{ post.title }}</h1>
-        
-        <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-light); font-size: 0.9rem;">
-            <time datetime="{{ post.date_posted.strftime('%Y-%m-%d') if post.date_posted }}">
-                {{ post.date_posted.strftime('%B %d, %Y') if post.date_posted else 'Unknown date' }}
-            </time>
-            {% if post.author %}
-            <span>•</span>
-            <span>By {{ post.author }}</span>
-            {% endif %}
-        </div>
-    </header>
-
-    {# Featured image #}
-    {% if post.image_url %}
-    <div style="margin-bottom: 2rem;">
-        <img src="{{ post.image_url }}" alt="{{ post.title }}" style="width: 100%; border-radius: 12px; max-height: 400px; object-fit: cover;">
-    </div>
-    {% endif %}
-
-    {# Post content #}
-    <div class="post-content" style="line-height: 1.8; color: var(--text-dark); font-size: 1.1rem;">
-        {% if post.rendered_content %}
-            {{ post.rendered_content()|safe }}
-        {% else %}
-            {# Simple line break preservation #}
-            {{ post.content|replace('\n', '<br>')|safe }}
-        {% endif %}
-    </div>
-
-    {# Post footer #}
-    <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--light-brown);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <a href="{{ url_for('posts') }}" style="color: var(--green); text-decoration: none; font-weight: 500;">
-                ← Back to all posts
-            </a>
-            
-            {# Share buttons (optional) #}
-            <div style="display: flex; gap: 0.5rem;">
-                <small style="color: var(--text-light);">Share:</small>
-                {# Add social sharing links here if desired #}
-            </div>
-        </div>
-    </footer>
 </article>
-
-{# Related posts section (optional) #}
-{% if related_posts %}
-<section style="max-width: 800px; margin: 3rem auto; padding: 0 1rem;">
-    <h2 style="color: var(--dark-green); margin-bottom: 1.5rem;">Related Posts</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-        {% for related_post in related_posts %}
-        <a href="{{ url_for('post_detail', slug=related_post.slug) }}" style="text-decoration: none; color: inherit;">
-            <div style="background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 2px 8px rgba(141, 110, 99, 0.1);">
-                <h3 style="color: var(--dark-green); margin: 0 0 0.5rem 0; font-size: 1.1rem;">{{ related_post.title }}</h3>
-                <small style="color: var(--text-light);">
-                    {{ related_post.date_posted.strftime('%b %d, %Y') if related_post.date_posted }}
-                </small>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
 {% endblock %}

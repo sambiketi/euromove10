@@ -176,31 +176,18 @@ def index():
                          admin=admin,
                          datetime=datetime)
 
-# Individual post detail page - ADD endpoint name
-@app.route('/posts/<slug>', endpoint='post_detail_page')
-def post_detail(slug):
-    post = Post.query.filter_by(slug=slug).first_or_404()
+
+# Individual post page
+@app.route('/posts/<int:post_id>')
+def post_detail(post_id):
+    post = Post.query.get_or_404(post_id)
     return render_template('post_detail.html', post=post)
 
-# Posts listing page
+# All posts listing
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
-    
-    # Generate slugs for posts that don't have them
-    for post in all_posts:
-        if not post.slug:
-            # Create URL-friendly slug
-            slug = post.title.lower().replace(" ", "-").replace("&", "and")
-            # Remove special characters and multiple hyphens
-            slug = ''.join(c for c in slug if c.isalnum() or c == '-')
-            slug = re.sub(r'-+', '-', slug)  # Replace multiple hyphens with single
-            post.slug = slug
-
     return render_template('posts.html', posts=all_posts, datetime=datetime)
-
-
-
 
 # Workshops page
 @app.route('/workshops')
