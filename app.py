@@ -178,9 +178,10 @@ def index():
 
 
 # Individual post page
-@app.route('/posts/<int:post_id>')
-def post_detail(post_id):
-    post = Post.query.get_or_404(post_id)
+@app.route('/posts/<slug>')
+def post_detail(slug):
+    title= slug.replace('-',' ')
+    post = Post.query.filter_by(title=title).first_or_404()
     return render_template('post_detail.html', post=post)
 
 # All posts listing
@@ -188,7 +189,6 @@ def post_detail(post_id):
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
     return render_template('posts.html', posts=all_posts, datetime=datetime)
-
 # Workshops page
 @app.route('/workshops')
 def workshops():

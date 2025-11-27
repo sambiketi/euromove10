@@ -6,17 +6,18 @@
 <section style="margin: 2rem 0;">
     <h1 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">News & Posts</h1>
     
-    <div class="posts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem;">
+    <!-- CHANGED: Full width grid instead of columns -->
+    <div class="posts-grid" style="display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem;">
         {% for post in posts %}
-        <a href="{{ url_for('post_detail', post_id=post.id) }}" style="text-decoration: none; color: inherit;">
-            <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
+        <a href="{{ url_for('post_detail', slug=post.title.lower().replace(' ', '-')) }}" style="text-decoration: none; color: inherit;">
+            <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 2rem; transition: transform 0.3s ease;">
                 {% if post.image_url %}
-                <img src="{{ post.image_url }}" alt="{{ post.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
+                <img src="{{ post.image_url }}" alt="{{ post.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 300px; object-fit: cover;">
                 {% endif %}
                 
-                <h3 style="color: var(--dark-green); margin-top: 0;">{{ post.title }}</h3>
+                <h2 style="color: var(--dark-green); margin-top: 0; font-size: 1.8rem;">{{ post.title }}</h2>
 
-                <div class="post-content" style="color: var(--text-dark); line-height: 1.6;">
+                <div class="post-content" style="color: var(--text-dark); line-height: 1.6; font-size: 1.1rem;">
                     {{ post.rendered_content()|safe }}
                 </div>
 
@@ -24,14 +25,11 @@
                     <small style="color: var(--text-light);">
                         <em>Posted on {{ post.date_posted.strftime('%B %d, %Y') if post.date_posted else 'Unknown date' }}</em>
                     </small>
-                    <div style="color: var(--green); font-weight: 500; margin-top: 0.5rem;">
-                        Read more →
-                    </div>
                 </div>
             </div>
         </a>
         {% else %}
-        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        <div style="text-align: center; padding: 3rem;">
             <p style="color: var(--text-light); font-size: 1.1rem;">No posts available yet. Check back soon for updates!</p>
         </div>
         {% endfor %}
