@@ -6,6 +6,7 @@ from datetime import datetime
 import markdown
 import bleach
 import time
+import re
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
@@ -181,7 +182,15 @@ def post_detail(slug):
     post = Post.query.filter_by(slug=slug).first_or_404()
     return render_template('post_detail.html', post=post)
 
-# Posts listing page (updated)
+
+
+# Individual post detail page
+@app.route('/posts/<slug>')
+def post_detail(slug):
+    post = Post.query.filter_by(slug=slug).first_or_404()
+    return render_template('post_detail.html', post=post)
+
+# Posts listing page
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
@@ -197,18 +206,7 @@ def posts():
             post.slug = slug
 
     return render_template('posts.html', posts=all_posts, datetime=datetime)
-
-@app.route('/posts/<slug>')
-def post_detail(slug):
-    post = Post.query.filter_by(slug=slug).first_or_404()
     
-    # Get related posts (same category or recent posts)
-    related_posts = Post.query.filter(
-        Post.slug != slug,  # Exclude current post
-        Post.id != post.id
-    ).order_by(Post.date_posted.desc()).limit(3).all()
-    
-    return render_template('post_detail.html', post=post, related_posts=related_posts)
 # Workshops page
 @app.route('/workshops')
 def workshops():
