@@ -227,7 +227,27 @@ def book():
 # Gallery route
 @app.route('/gallery')
 def gallery():
-    return render_template('gallery.html', datetime=datetime)
+    # fetch rows from database
+    rows = db.session.execute("""
+        SELECT item_id, source, image_url, title, created_at
+        FROM gallery
+        WHERE image_url IS NOT NULL AND image_url != 'No image'
+        ORDER BY created_at DESC
+    """).fetchall()
+
+    # convert to list of dicts
+    gallery_data = []
+    for r in rows:
+        gallery_data.append({
+            "item_id": r.item_id,
+            "source": r.source,
+            "image_url": r.image_url,
+            "title": r.title,
+            "created_at": r.created_at
+        })
+
+    # pass to template
+    return render_template('gallery.html', gallery=gallery_data, datetime=datetime)
 
 # Privacy Policy route
 @app.route('/privacy')
