@@ -249,6 +249,7 @@ def gallery():
     # pass to template
     return render_template('gallery.html', gallery=gallery_data, datetime=datetime)
 
+
 # Privacy Policy route
 @app.route('/privacy')
 def privacy():
