@@ -223,31 +223,35 @@ def book():
         flash('Please fill in all fields.', 'danger')
     
     return redirect(url_for('index'))
-
-# Gallery route
+    #gallery
 @app.route('/gallery')
 def gallery():
-    # fetch rows from database
-    rows = db.session.execute("""
-        SELECT item_id, source, image_url, title, created_at
-        FROM gallery
-        WHERE image_url IS NOT NULL AND image_url != 'No image'
-        ORDER BY created_at DESC
-    """).fetchall()
+    try:
+        # Wrap query string in text() inline
+        rows = db.session.execute(db.text("""
+            SELECT item_id, source, image_url, title, created_at
+            FROM gallery
+            WHERE image_url IS NOT NULL AND image_url != 'No image'
+            ORDER BY created_at DESC
+        """)).fetchall()
 
-    # convert to list of dicts
-    gallery_data = []
-    for r in rows:
-        gallery_data.append({
-            "item_id": r.item_id,
-            "source": r.source,
-            "image_url": r.image_url,
-            "title": r.title,
-            "created_at": r.created_at
-        })
+        # Convert to list of dicts
+        gallery_data = []
+        for r in rows:
+            gallery_data.append({
+                "item_id": r.item_id,
+                "source": r.source,
+                "image_url": r.image_url,
+                "title": r.title,
+                "created_at": r.created_at
+            })
 
-    # pass to template
-    return render_template('gallery.html', gallery=gallery_data, datetime=datetime)
+        # Pass to template
+        return render_template('gallery.html', gallery=gallery_data, datetime=datetime)
+
+    except Exception as e:
+        print("Error fetching gallery:", e)
+        return "Internal Server Error", 500
 
 
 # Privacy Policy route
