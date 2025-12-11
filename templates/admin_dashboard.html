@@ -246,6 +246,7 @@
             <button class="nav-tab" onclick="showTab('posts')">📝 Manage Posts</button>
             <button class="nav-tab" onclick="showTab('workshops')">🎯 Manage Workshops</button>
             <button class="nav-tab" onclick="showTab('bookings')">📋 View Bookings</button>
+            <button class="nav-tab" onclick="showTab('site_settings')">🌐 Site Settings</button>
         </div>
 
         <!-- Contact Info Tab -->
@@ -425,6 +426,28 @@
             </div>
         </div>
     </div>
+<!-- Site Settings Tab -->
+<div id="site_settings" class="tab-content">
+    <div class="dashboard-section">
+        <h2>🌐 Site Settings</h2>
+        <form method="POST" action="{{ url_for('update_site_settings') }}">
+            <div class="form-group">
+                <label for="logo_url">Logo URL:</label>
+                <input type="url" id="logo_url" name="logo_url" 
+                       value="{{ site_settings.logo_url if site_settings else '' }}" placeholder="https://example.com/logo.png" required>
+            </div>
+            <div class="form-group">
+                <label for="background_url">Background Image URL:</label>
+                <input type="url" id="background_url" name="background_url" 
+                       value="{{ site_settings.background_url if site_settings else '' }}" placeholder="https://example.com/background.jpg" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+        <form method="POST" action="{{ url_for('delete_site_settings') }}" style="margin-top: 1rem;">
+            <button type="submit" class="btn btn-danger">Delete Settings</button>
+        </form>
+    </div>
+</div>
 
     <script>
         function showTab(tabName) {

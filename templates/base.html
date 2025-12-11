@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Euromove | Empowering Kenyans to Move Forward{% endblock %}</title>
+    <title>{% block title %}Empower Kenyans to Work & Study in Europe{% endblock %}</title>
     <style>
         :root {
             --cream: #fef7e5;
@@ -20,26 +20,38 @@
             margin: 0;
             font-family: "Poppins", sans-serif;
             background-color: var(--cream);
+            background-image: url('{{ site_settings.background_url if site_settings and site_settings.background_url else "" }}');
+            background-size: cover;
+            background-position: center;
             color: var(--text-dark);
         }
 
         header {
-            background: linear-gradient(135deg, var(--green), var(--dark-green));
-            color: white;
+            width: 100%;
             text-align: center;
-            padding: 1.5rem 0;
-            box-shadow: 0 2px 10px rgba(46, 125, 50, 0.3);
+            padding: 0;
+            background: rgba(0,0,0,0.3); /* optional overlay for readability */
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 2rem;
-            letter-spacing: 1px;
+        header .container {
+            position: relative;
         }
 
-        header p {
-            margin: 0.5rem 0 0 0;
-            opacity: 0.9;
+        header img.site-logo {
+            width: 100%; /* full width */
+            height: auto;
+            display: block;
+        }
+
+        header .mission-statement {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
         }
 
         nav {
@@ -120,8 +132,10 @@
 <body>
     <header>
         <div class="container">
-            <h1>🌍 Euromove</h1>
-            <p>Empowering Kenyans to Move Forward</p>
+            {% if site_settings and site_settings.logo_url %}
+            <img src="{{ site_settings.logo_url }}" alt="Site Logo" class="site-logo">
+            {% endif %}
+            <div class="mission-statement">Work & Study in Europe</div>
         </div>
     </header>
 
@@ -149,7 +163,7 @@
 
     <footer>
         <div class="container">
-            <p>© {{ datetime.utcnow().year }} Euromove | Empowering Kenyans to Move Forward</p>
+            <p>© {{ datetime.utcnow().year }} | Work & Study in Europe</p>
             <p>
                 <a href="{{ url_for('privacy') }}" style="color: white; text-decoration: underline;">Privacy Policy</a> | 
                 <a href="{{ url_for('index') }}#book" style="color: white; text-decoration: underline;">Book Consultation</a>

@@ -136,6 +136,12 @@ class Admin(db.Model):
     password = db.Column(db.String(50))
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
+class SiteSettings(db.Model):
+    __tablename__ = 'site_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    logo_url = db.Column(db.String(500), nullable=False)
+    background_url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 # --- INITIALIZE DATABASE WITH WAKE-UP ---
 with app.app_context():
@@ -337,17 +343,60 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
+        #update site settings
+                # --- Insert or Update Site Settings ---
+        site_settings = SiteSettings.query.first()
+
+        logo_url = request.form.get('logo_url', '').strip()
+        background_url = request.form.get('background_url', '').strip()
+
+        if site_settings:
+            # Update existing row
+            site_settings.logo_url = logo_url
+            site_settings.background_url = background_url
+            db.session.commit()
+            flash("Site settings updated successfully", "success")
+        else:
+            # Insert new row
+            try:
+                new_settings = SiteSettings(
+                    logo_url=logo_url,
+                    background_url=background_url
+                )
+                db.session.add(new_settings)
+                db.session.commit()
+                flash("Site settings saved successfully", "success")
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error saving site settings: {e}", "danger")
+                # --- Delete Site Settings ---
+        site_settings = SiteSettings.query.first()
+
+        if site_settings:
+            try:
+                db.session.delete(site_settings)
+                db.session.commit()
+                flash("Site settings deleted successfully", "success")
+                site_settings = None  # reset variable
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error deleting site settings: {e}", "danger")
+        else:
+            flash("No site settings to delete", "warning")
+
+
+        
 
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     bookings = Booking.query.order_by(Booking.created_at.desc()).all()
-
+    site_settings = SiteSettings.query.first()
     return render_template('admin_dashboard.html', 
                          posts=posts, 
                          workshops=workshops, 
                          bookings=bookings,
-                         admin=admin,
+                         admin=admin,site_settings=site_settings,
                          datetime=datetime)
 
 # --- LOGOUT ---
