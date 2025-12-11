@@ -136,12 +136,15 @@ class Admin(db.Model):
     password = db.Column(db.String(50))
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
+from datetime import datetime
+
 class SiteSettings(db.Model):
     __tablename__ = 'site_settings'
     id = db.Column(db.Integer, primary_key=True)
-    logo_url = db.Column(db.String(500), nullable=False)
-    background_url = db.Column(db.String(500), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    logo_url = db.Column(db.String(500), nullable=True)          # allow nullable to prevent INSERT errors
+    background_url = db.Column(db.String(500), nullable=True)    # allow nullable
+    created_at = db.Column(db.DateTime, default=datetime.now) # safe per-row timestamp
+
 
 # --- INITIALIZE DATABASE WITH WAKE-UP ---
 with app.app_context():
@@ -343,47 +346,51 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
-    			# --- Update Site Settings ---
-		
-        # Update Site Settings
-        elif 'logo_url' in request.form:
-            logo_url = request.form.get('logo_url', '').strip()
-            background_url = request.form.get('background_url', '').strip()
+        # --- Site Settings Logic ---
+        if request.method == 'POST':
+            # --- Update Site Settings ---
+            if request.form.get('form_type') == 'update_site_settings':
+                logo_url = request.form.get('logo_url', '').strip()
+                background_url = request.form.get('background_url', '').strip()
 
-            if not logo_url or not background_url:
-                flash("Both Logo URL and Background Image URL are required", "danger")
-            else:
+                # Validate inputs
+                if not logo_url or not background_url:
+                    flash("Both Logo URL and Background Image URL are required", "danger")
+                else:
+                    try:
+                        # Check if a SiteSettings row already exists
+                        setting = SiteSettings.query.first()
+                        if not setting:
+                            # Create new SiteSettings row if none exists
+                            setting = SiteSettings(logo_url=logo_url, background_url=background_url)
+                            db.session.add(setting)
+                        else:
+                            # Update existing SiteSettings row
+                            setting.logo_url = logo_url
+                            setting.background_url = background_url
+                        db.session.commit()
+                        flash("Site settings updated successfully", "success")
+                    except Exception as e:
+                        db.session.rollback()
+                        flash(f"Error updating site settings: {e}", "danger")
+
+            # --- Delete Site Settings ---
+            elif request.form.get('form_type') == 'delete_site_settings':
                 try:
+                    # Fetch first (and only) SiteSettings row
                     setting = SiteSettings.query.first()
-                    if not setting:
-                        setting = SiteSettings(
-                            logo_url=logo_url,
-                            background_url=background_url
-                        )
-                        db.session.add(setting)
+                    if setting:
+                        # Delete row if it exists
+                        db.session.delete(setting)
+                        db.session.commit()
+                        flash("Site settings deleted successfully", "success")
                     else:
-                        setting.logo_url = logo_url
-                        setting.background_url = background_url
-                    db.session.commit()
-                    flash("Site settings updated successfully", "success")
+                        # Handle case when no settings exist
+                        flash("No site settings found to delete", "danger")
                 except Exception as e:
                     db.session.rollback()
-                    flash(f"Error updating site settings: {e}", "danger")
-    # --- Delete Site Settings ---
-    elif 'delete_site_settings' in request.form:
-        try:
-            setting = SiteSettings.query.first()
-            if setting:
-                db.session.delete(setting)
-                db.session.commit()
-                flash("Site settings deleted successfully", "success")
-            else:
-                flash("No site settings found to delete", "danger")
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error deleting site settings: {e}", "danger")
-			
-    
+                    flash(f"Error deleting site settings: {e}", "danger")
+
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()

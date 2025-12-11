@@ -430,20 +430,25 @@
 <div id="site_settings" class="tab-content">
     <div class="dashboard-section">
         <h2>🌐 Site Settings</h2>
-        <form method="POST" action="{{ url_for('update_site_settings') }}">
+        <!-- Update Settings Form -->
+        <form method="POST" action="{{ url_for('admin_dashboard') }}">
+            <input type="hidden" name="form_type" value="update_site_settings">
             <div class="form-group">
                 <label for="logo_url">Logo URL:</label>
                 <input type="url" id="logo_url" name="logo_url" 
-                       value="{{ site_settings.logo_url if site_settings else '' }}" placeholder="https://example.com/logo.png" required>
+                       value="{{ site_settings.logo_url if site_settings else '' }}" required>
             </div>
             <div class="form-group">
                 <label for="background_url">Background Image URL:</label>
                 <input type="url" id="background_url" name="background_url" 
-                       value="{{ site_settings.background_url if site_settings else '' }}" placeholder="https://example.com/background.jpg" required>
+                       value="{{ site_settings.background_url if site_settings else '' }}" required>
             </div>
             <button type="submit" class="btn btn-primary">Save Settings</button>
         </form>
-        <form method="POST" action="{{ url_for('delete_site_settings') }}" style="margin-top: 1rem;">
+
+        <!-- Delete Settings Form -->
+        <form method="POST" action="{{ url_for('admin_dashboard') }}" style="margin-top: 1rem;">
+            <input type="hidden" name="form_type" value="delete_site_settings">
             <button type="submit" class="btn btn-danger">Delete Settings</button>
         </form>
     </div>
