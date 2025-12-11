@@ -343,50 +343,47 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
-        #update site settings
-                # --- Insert or Update Site Settings ---
-        site_settings = SiteSettings.query.first()
+    			# --- Update Site Settings ---
+		
+        # Update Site Settings
+        elif 'logo_url' in request.form:
+            logo_url = request.form.get('logo_url', '').strip()
+            background_url = request.form.get('background_url', '').strip()
 
-        logo_url = request.form.get('logo_url', '').strip()
-        background_url = request.form.get('background_url', '').strip()
-
-        if site_settings:
-            # Update existing row
-            site_settings.logo_url = logo_url
-            site_settings.background_url = background_url
-            db.session.commit()
-            flash("Site settings updated successfully", "success")
-        else:
-            # Insert new row
-            try:
-                new_settings = SiteSettings(
-                    logo_url=logo_url,
-                    background_url=background_url
-                )
-                db.session.add(new_settings)
-                db.session.commit()
-                flash("Site settings saved successfully", "success")
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error saving site settings: {e}", "danger")
-                # --- Delete Site Settings ---
-        site_settings = SiteSettings.query.first()
-
-        if site_settings:
-            try:
-                db.session.delete(site_settings)
+            if not logo_url or not background_url:
+                flash("Both Logo URL and Background Image URL are required", "danger")
+            else:
+                try:
+                    setting = SiteSettings.query.first()
+                    if not setting:
+                        setting = SiteSettings(
+                            logo_url=logo_url,
+                            background_url=background_url
+                        )
+                        db.session.add(setting)
+                    else:
+                        setting.logo_url = logo_url
+                        setting.background_url = background_url
+                    db.session.commit()
+                    flash("Site settings updated successfully", "success")
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error updating site settings: {e}", "danger")
+    # --- Delete Site Settings ---
+    elif 'delete_site_settings' in request.form:
+        try:
+            setting = SiteSettings.query.first()
+            if setting:
+                db.session.delete(setting)
                 db.session.commit()
                 flash("Site settings deleted successfully", "success")
-                site_settings = None  # reset variable
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error deleting site settings: {e}", "danger")
-        else:
-            flash("No site settings to delete", "warning")
-
-
-        
-
+            else:
+                flash("No site settings found to delete", "danger")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error deleting site settings: {e}", "danger")
+			
+    
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
