@@ -167,8 +167,14 @@ with app.app_context():
     else:
         print("⚠️  Database not available, skipping initialization")
 
-# --- ALL ROUTES WITH COMPLETE FUNCTIONALITY ---
 
+# --- CONTEXT PROCESSOR: Inject site settings into all templates ---
+@app.context_processor
+def inject_site_settings():
+    setting = SiteSettings.query.first()
+    return dict(site_settings=setting)
+    
+# --- ALL ROUTES WITH COMPLETE FUNCTIONALITY ---
 # Public home page
 @app.route('/')
 def index():
@@ -346,26 +352,22 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
-        # --- Site Settings Logic ---
+         # --- Site Settings Logic ---
         if request.method == 'POST':
             # --- Update Site Settings ---
             if request.form.get('form_type') == 'update_site_settings':
                 logo_url = request.form.get('logo_url', '').strip()
                 background_url = request.form.get('background_url', '').strip()
 
-                # Validate inputs
                 if not logo_url or not background_url:
                     flash("Both Logo URL and Background Image URL are required", "danger")
                 else:
                     try:
-                        # Check if a SiteSettings row already exists
                         setting = SiteSettings.query.first()
                         if not setting:
-                            # Create new SiteSettings row if none exists
                             setting = SiteSettings(logo_url=logo_url, background_url=background_url)
                             db.session.add(setting)
                         else:
-                            # Update existing SiteSettings row
                             setting.logo_url = logo_url
                             setting.background_url = background_url
                         db.session.commit()
@@ -377,19 +379,17 @@ def admin_dashboard():
             # --- Delete Site Settings ---
             elif request.form.get('form_type') == 'delete_site_settings':
                 try:
-                    # Fetch first (and only) SiteSettings row
                     setting = SiteSettings.query.first()
                     if setting:
-                        # Delete row if it exists
                         db.session.delete(setting)
                         db.session.commit()
                         flash("Site settings deleted successfully", "success")
                     else:
-                        # Handle case when no settings exist
                         flash("No site settings found to delete", "danger")
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error deleting site settings: {e}", "danger")
+       
 
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
