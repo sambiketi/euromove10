@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response  # Added Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import markdown
@@ -16,6 +16,9 @@ load_dotenv()
 # --- Initialize Flask app ---
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
+
+# Site configuration
+SITE_URL = "https://euromove.co.ke"  # Your site URL
 
 # --- DATABASE CONFIG WITH SSL & CONNECTION POOLING ---
 raw_db_url = os.environ.get(
@@ -136,6 +139,7 @@ class Admin(db.Model):
     password = db.Column(db.String(50))
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
+
 from datetime import datetime
 
 class SiteSettings(db.Model):
@@ -173,7 +177,157 @@ with app.app_context():
 def inject_site_settings():
     setting = SiteSettings.query.first()
     return dict(site_settings=setting)
+
+# --- ROBOTS.TXT ROUTE ---
+@app.route('/robots.txt')
+def robots_txt():
+    """Serve robots.txt for SEO optimization for euromove.co.ke"""
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /private/",
+        "Disallow: /tmp/",
+        f"Sitemap: {SITE_URL}/sitemap.xml",
+        f"Sitemap: {SITE_URL}/sitemap-posts.xml",
+        f"Sitemap: {SITE_URL}/sitemap-workshops.xml",
+        "",
+        "# Googlebot specific",
+        "User-agent: Googlebot",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Crawl-delay: 1",
+        "",
+        "# Bingbot",
+        "User-agent: Bingbot",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Crawl-delay: 2",
+        "",
+        "# Bad bots",
+        "User-agent: MJ12bot",
+        "Disallow: /",
+        "",
+        "User-agent: AhrefsBot",
+        "Disallow: /",
+        "",
+        "# Site contact",
+        f"# Site: {SITE_URL}",
+        "# Contact: admin@euromove.co.ke",
+    ]
+    return Response("\n".join(lines), mimetype="text/plain")
+
+# --- SITEMAP.XML ROUTE ---
+@app.route('/sitemap.xml')
+def sitemap():
+    """Generate dynamic sitemap.xml for euromove.co.ke"""
     
+    # Get all posts and workshops
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    
+    # Start XML
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        '  <sitemap>',
+        f'    <loc>{SITE_URL}/sitemap-posts.xml</loc>',
+        '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+        '  </sitemap>',
+        '  <sitemap>',
+        f'    <loc>{SITE_URL}/sitemap-workshops.xml</loc>',
+        '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+        '  </sitemap>',
+        '  <sitemap>',
+        f'    <loc>{SITE_URL}/sitemap-static.xml</loc>',
+        '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+        '  </sitemap>',
+        '</sitemapindex>'
+    ]
+    
+    return Response("\n".join(xml_lines), mimetype="application/xml")
+
+# --- SITEMAP-POSTS.XML ---
+@app.route('/sitemap-posts.xml')
+def sitemap_posts():
+    """Sitemap for all blog posts"""
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    
+    for post in posts:
+        slug = post.title.replace(' ', '-')
+        xml_lines.extend([
+            '  <url>',
+            f'    <loc>{SITE_URL}/posts/{slug}</loc>',
+            f'    <lastmod>{post.date_posted.strftime("%Y-%m-%d")}</lastmod>',
+            '    <changefreq>monthly</changefreq>',
+            '    <priority>0.8</priority>',
+            '  </url>',
+        ])
+    
+    xml_lines.append('</urlset>')
+    return Response("\n".join(xml_lines), mimetype="application/xml")
+
+# --- SITEMAP-WORKSHOPS.XML ---
+@app.route('/sitemap-workshops.xml')
+def sitemap_workshops():
+    """Sitemap for all workshops"""
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    
+    # Add workshops page
+    xml_lines.extend([
+        '  <url>',
+        f'    <loc>{SITE_URL}/workshops</loc>',
+        '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+        '    <changefreq>weekly</changefreq>',
+        '    <priority>0.9</priority>',
+        '  </url>',
+    ])
+    
+    xml_lines.append('</urlset>')
+    return Response("\n".join(xml_lines), mimetype="application/xml")
+
+# --- SITEMAP-STATIC.XML ---
+@app.route('/sitemap-static.xml')
+def sitemap_static():
+    """Sitemap for static pages"""
+    
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    
+    # Add all static pages
+    static_pages = [
+        ('', '1.0', 'daily'),
+        ('/posts', '0.9', 'weekly'),
+        ('/workshops', '0.9', 'weekly'),
+        ('/gallery', '0.8', 'weekly'),
+        ('/privacy', '0.3', 'monthly'),
+    ]
+    
+    for page, priority, changefreq in static_pages:
+        xml_lines.extend([
+            '  <url>',
+            f'    <loc>{SITE_URL}{page}</loc>',
+            '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+            f'    <changefreq>{changefreq}</changefreq>',
+            f'    <priority>{priority}</priority>',
+            '  </url>',
+        ])
+    
+    xml_lines.append('</urlset>')
+    return Response("\n".join(xml_lines), mimetype="application/xml")
+
 # --- ALL ROUTES WITH COMPLETE FUNCTIONALITY ---
 # Public home page
 @app.route('/')
@@ -189,7 +343,8 @@ def index():
                          latest_post=latest_post, 
                          upcoming_workshops=upcoming_workshops,
                          admin=admin,
-                         datetime=datetime)
+                         datetime=datetime,
+                         SITE_URL=SITE_URL)
 
 
 # Individual post page
@@ -197,13 +352,14 @@ def index():
 def post_detail(slug):
     title= slug.replace('-',' ')
     post = Post.query.filter_by(title=title).first_or_404()
-    return render_template('post_detail.html', post=post)
+    return render_template('post_detail.html', post=post, SITE_URL=SITE_URL)
 
 # All posts listing
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
-    return render_template('posts.html', posts=all_posts, datetime=datetime)
+    return render_template('posts.html', posts=all_posts, datetime=datetime, SITE_URL=SITE_URL)
+
 # Workshops page
 @app.route('/workshops')
 def workshops():
@@ -214,7 +370,7 @@ def workshops():
         if not hasattr(workshop, 'slug') or not workshop.slug:
             workshop.slug = workshop.title.replace(" ", "_")  # simple slug
 
-    return render_template('workshops.html', workshops=all_workshops, datetime=datetime)
+    return render_template('workshops.html', workshops=all_workshops, datetime=datetime, SITE_URL=SITE_URL)
 
 
 
@@ -238,7 +394,8 @@ def book():
         flash('Please fill in all fields.', 'danger')
     
     return redirect(url_for('index'))
-    #gallery
+
+#gallery
 @app.route('/gallery')
 def gallery():
     try:
@@ -262,7 +419,7 @@ def gallery():
             })
 
         # Pass to template
-        return render_template('gallery.html', gallery=gallery_data, datetime=datetime)
+        return render_template('gallery.html', gallery=gallery_data, datetime=datetime, SITE_URL=SITE_URL)
 
     except Exception as e:
         print("Error fetching gallery:", e)
@@ -273,7 +430,7 @@ def gallery():
 @app.route('/privacy')
 def privacy():
     admin = Admin.query.first()
-    return render_template('privacy.html', admin=admin, datetime=datetime)
+    return render_template('privacy.html', admin=admin, datetime=datetime, SITE_URL=SITE_URL)
 
 # --- ADMIN LOGIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -287,7 +444,7 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash("Invalid username or password", "danger")
-    return render_template('admin_login.html')
+    return render_template('admin_login.html', SITE_URL=SITE_URL)
 
 # --- ADMIN DASHBOARD ---
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
@@ -400,8 +557,10 @@ def admin_dashboard():
                          posts=posts, 
                          workshops=workshops, 
                          bookings=bookings,
-                         admin=admin,site_settings=site_settings,
-                         datetime=datetime)
+                         admin=admin,
+                         site_settings=site_settings,
+                         datetime=datetime,
+                         SITE_URL=SITE_URL)
 
 # --- LOGOUT ---
 @app.route('/admin/logout')
