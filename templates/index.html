@@ -5,6 +5,32 @@
     <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 1rem;">Your Gateway to Opportunities in Europe</h2>
     </section>
 
+<!-- Services Section -->
+<section style="margin: 3rem 0;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Our Services</h3>
+    <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        {% for service in services %}
+        <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
+            <h4 style="color: var(--dark-green); margin-top: 0;">{{ service.title }}</h4>
+            <div style="color: var(--green); font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">{{ service.price }}</div>
+            <div class="service-content" style="color: var(--text-dark); line-height: 1.6;">
+                {{ service.rendered_content()|safe }}
+            </div>
+            {% if service.action_type == 'book' %}
+            <a href="{{ url_for('book_service', service_id=service.id) }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Book Now</a>
+            {% elif service.action_type == 'view' and service.action_link %}
+            <a href="{{ service.action_link }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block; background: var(--brown);">View Course</a>
+            {% endif %}
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-light); grid-column: 1 / -1;">No services available at the moment.</p>
+        {% endfor %}
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+        <a href="{{ url_for('services') }}" class="btn btn-primary" style="display: inline-block;">View All Services</a>
+    </div>
+</section>
+
 <!-- Latest Post Section -->
 <section style="margin: 3rem 0;">
     <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Latest Update</h3>

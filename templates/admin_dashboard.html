@@ -245,6 +245,7 @@
             <button class="nav-tab active" onclick="showTab('contact')">📞 Contact Info</button>
             <button class="nav-tab" onclick="showTab('posts')">📝 Manage Posts</button>
             <button class="nav-tab" onclick="showTab('workshops')">🎯 Manage Workshops</button>
+            <button class="nav-tab" onclick="showTab('services')">💰 Manage Services</button>
             <button class="nav-tab" onclick="showTab('bookings')">📋 View Bookings</button>
             <button class="nav-tab" onclick="showTab('site_settings')">🌐 Site Settings</button>
         </div>
@@ -395,6 +396,100 @@
             </div>
         </div>
 
+        <!-- Services Tab -->
+        <div id="services" class="tab-content">
+            <div class="dashboard-section">
+                <h2>💰 Add New Service</h2>
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="service_title">Service Title:</label>
+                        <input type="text" id="service_title" name="service_title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_description">Description:</label>
+                        <textarea id="service_description" name="service_description" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_price">Price:</label>
+                        <input type="text" id="service_price" name="service_price" placeholder="e.g., 2 500 KES" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_format">Content Format:</label>
+                        <select id="service_format" name="service_format">
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_action_type">Action Type:</label>
+                        <select id="service_action_type" name="service_action_type">
+                            <option value="book">Book Now</option>
+                            <option value="view">View Course</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="service_action_link">Course Link (optional, for View Course):</label>
+                        <input type="url" id="service_action_link" name="service_action_link" placeholder="https://example.com/course">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Service</button>
+                </form>
+            </div>
+
+            <div class="dashboard-section">
+                <h2>💼 Existing Services</h2>
+                {% if services %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Price</th>
+                            <th>Action Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td><strong>{{ service.title }}</strong></td>
+                            <td><span style="background: var(--cream); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ service.price }}</span></td>
+                            <td>
+                                {% if service.action_type == 'book' %}
+                                <span style="background: #e8f5e8; color: var(--dark-green); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Book Now</span>
+                                {% else %}
+                                <span style="background: #e3f2fd; color: #1976d2; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">View Course</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if service.is_active %}
+                                <span style="background: #e8f5e8; color: var(--dark-green); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Active</span>
+                                {% else %}
+                                <span style="background: #f5f5f5; color: #757575; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn" style="padding: 6px 12px; background: var(--brown); color: white; font-size: 0.8rem;">Edit</a>
+                                <form method="POST" action="{{ url_for('toggle_service', service_id=service.id) }}" style="display: inline;">
+                                    {% if service.is_active %}
+                                    <button type="submit" class="btn" style="padding: 6px 12px; background: #757575; color: white; font-size: 0.8rem;">Deactivate</button>
+                                    {% else %}
+                                    <button type="submit" class="btn" style="padding: 6px 12px; background: var(--green); color: white; font-size: 0.8rem;">Activate</button>
+                                    {% endif %}
+                                </form>
+                                <form method="POST" action="{{ url_for('delete_service', service_id=service.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this service?');">
+                                    <button type="submit" class="btn" style="padding: 6px 12px; background: var(--danger); color: white; font-size: 0.8rem;">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No services found.</p>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Bookings Tab -->
         <div id="bookings" class="tab-content">
             <div class="dashboard-section">
@@ -425,34 +520,35 @@
                 {% endif %}
             </div>
         </div>
-    </div>
-<!-- Site Settings Tab -->
-<div id="site_settings" class="tab-content">
-    <div class="dashboard-section">
-        <h2>🌐 Site Settings</h2>
-        <!-- Update Settings Form -->
-        <form method="POST" action="{{ url_for('admin_dashboard') }}">
-            <input type="hidden" name="form_type" value="update_site_settings">
-            <div class="form-group">
-                <label for="logo_url">Logo URL:</label>
-                <input type="url" id="logo_url" name="logo_url" 
-                       value="{{ site_settings.logo_url if site_settings else '' }}" required>
-            </div>
-            <div class="form-group">
-                <label for="background_url">Background Image URL:</label>
-                <input type="url" id="background_url" name="background_url" 
-                       value="{{ site_settings.background_url if site_settings else '' }}" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Save Settings</button>
-        </form>
 
-        <!-- Delete Settings Form -->
-        <form method="POST" action="{{ url_for('admin_dashboard') }}" style="margin-top: 1rem;">
-            <input type="hidden" name="form_type" value="delete_site_settings">
-            <button type="submit" class="btn btn-danger">Delete Settings</button>
-        </form>
+        <!-- Site Settings Tab -->
+        <div id="site_settings" class="tab-content">
+            <div class="dashboard-section">
+                <h2>🌐 Site Settings</h2>
+                <!-- Update Settings Form -->
+                <form method="POST" action="{{ url_for('admin_dashboard') }}">
+                    <input type="hidden" name="form_type" value="update_site_settings">
+                    <div class="form-group">
+                        <label for="logo_url">Logo URL:</label>
+                        <input type="url" id="logo_url" name="logo_url" 
+                               value="{{ site_settings.logo_url if site_settings else '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="background_url">Background Image URL:</label>
+                        <input type="url" id="background_url" name="background_url" 
+                               value="{{ site_settings.background_url if site_settings else '' }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+
+                <!-- Delete Settings Form -->
+                <form method="POST" action="{{ url_for('admin_dashboard') }}" style="margin-top: 1rem;">
+                    <input type="hidden" name="form_type" value="delete_site_settings">
+                    <button type="submit" class="btn btn-danger">Delete Settings</button>
+                </form>
+            </div>
+        </div>
     </div>
-</div>
 
     <script>
         function showTab(tabName) {

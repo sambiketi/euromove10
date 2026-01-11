@@ -75,6 +75,23 @@ def wake_up_database():
             print(f"❌ Unexpected error during database wake-up: {e}")
             return False
 
+
+# --- Helper Functions ---
+def create_slug(text):
+    """Create a URL-friendly slug from text"""
+    # Convert to lowercase
+    text = text.lower()
+    # Replace spaces with hyphens
+    text = text.replace(' ', '-')
+    # Remove special characters, keep only alphanumeric and hyphens
+    text = re.sub(r'[^a-z0-9\-]', '', text)
+    # Remove multiple hyphens
+    text = re.sub(r'\-+', '-', text)
+    # Remove leading/trailing hyphens
+    text = text.strip('-')
+    return text
+
+
 # --- MODELS ---
 class Workshop(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -140,14 +157,40 @@ class Admin(db.Model):
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
 
-from datetime import datetime
-
 class SiteSettings(db.Model):
     __tablename__ = 'site_settings'
     id = db.Column(db.Integer, primary_key=True)
     logo_url = db.Column(db.String(500), nullable=True)          # allow nullable to prevent INSERT errors
     background_url = db.Column(db.String(500), nullable=True)    # allow nullable
     created_at = db.Column(db.DateTime, default=datetime.now) # safe per-row timestamp
+
+class Service(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.String(50), nullable=False)  # e.g., "2 500 KES"
+    content_format = db.Column(db.String(10), default='html')
+    action_type = db.Column(db.String(20), default='book')  # 'book' or 'view'
+    action_link = db.Column(db.String(300), nullable=True)  # optional for 'view course'
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    def rendered_content(self):
+        if self.content_format == 'markdown':
+            html = markdown.markdown(self.description, extensions=['extra', 'fenced_code'])
+            return self.sanitize_html(html)
+        return self.sanitize_html(self.description)
+    
+    def sanitize_html(self, html_content):
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'b', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+                       'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'code', 'pre', 'span', 'div']
+        allowed_attrs = {
+            'a': ['href', 'title', 'target'],
+            'img': ['src', 'alt', 'width', 'height', 'class'],
+            'div': ['class'],
+            'span': ['class']
+        }
+        return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 
 # --- INITIALIZE DATABASE WITH WAKE-UP ---
@@ -177,6 +220,7 @@ with app.app_context():
 def inject_site_settings():
     setting = SiteSettings.query.first()
     return dict(site_settings=setting)
+
 
 # --- ROBOTS.TXT ROUTE ---
 @app.route('/robots.txt')
@@ -217,6 +261,7 @@ def robots_txt():
     ]
     return Response("\n".join(lines), mimetype="text/plain")
 
+
 # --- SITEMAP.XML ROUTE ---
 @app.route('/sitemap.xml')
 def sitemap():
@@ -247,6 +292,7 @@ def sitemap():
     
     return Response("\n".join(xml_lines), mimetype="application/xml")
 
+
 # --- SITEMAP-POSTS.XML ---
 @app.route('/sitemap-posts.xml')
 def sitemap_posts():
@@ -259,7 +305,7 @@ def sitemap_posts():
     ]
     
     for post in posts:
-        slug = post.title.replace(' ', '-')
+        slug = create_slug(post.title)
         xml_lines.extend([
             '  <url>',
             f'    <loc>{SITE_URL}/posts/{slug}</loc>',
@@ -271,6 +317,7 @@ def sitemap_posts():
     
     xml_lines.append('</urlset>')
     return Response("\n".join(xml_lines), mimetype="application/xml")
+
 
 # --- SITEMAP-WORKSHOPS.XML ---
 @app.route('/sitemap-workshops.xml')
@@ -287,7 +334,7 @@ def sitemap_workshops():
     xml_lines.extend([
         '  <url>',
         f'    <loc>{SITE_URL}/workshops</loc>',
-        '    <lastmod>' + datetime.now().strftime("%Y-%m-%d") + '</lastmod>',
+        '    <lastmod>' + datetime.now().strftime("%Y-%m-d") + '</lastmod>',
         '    <changefreq>weekly</changefreq>',
         '    <priority>0.9</priority>',
         '  </url>',
@@ -295,6 +342,7 @@ def sitemap_workshops():
     
     xml_lines.append('</urlset>')
     return Response("\n".join(xml_lines), mimetype="application/xml")
+
 
 # --- SITEMAP-STATIC.XML ---
 @app.route('/sitemap-static.xml')
@@ -311,6 +359,7 @@ def sitemap_static():
         ('', '1.0', 'daily'),
         ('/posts', '0.9', 'weekly'),
         ('/workshops', '0.9', 'weekly'),
+        ('/services', '0.9', 'weekly'),
         ('/gallery', '0.8', 'weekly'),
         ('/privacy', '0.3', 'monthly'),
     ]
@@ -328,6 +377,7 @@ def sitemap_static():
     xml_lines.append('</urlset>')
     return Response("\n".join(xml_lines), mimetype="application/xml")
 
+
 # --- ALL ROUTES WITH COMPLETE FUNCTIONALITY ---
 # Public home page
 @app.route('/')
@@ -336,12 +386,15 @@ def index():
     latest_post = Post.query.order_by(Post.date_posted.desc()).first()
     # Get upcoming workshops (next 7 days)
     upcoming_workshops = Workshop.query.order_by(Workshop.date_posted.desc()).limit(3).all()
+    # Get active services for home page
+    services = Service.query.filter_by(is_active=True).order_by(Service.created_at.asc()).limit(3).all()
     # Get admin contact info
     admin = Admin.query.first()
     
     return render_template('index.html', 
                          latest_post=latest_post, 
                          upcoming_workshops=upcoming_workshops,
+                         services=services,
                          admin=admin,
                          datetime=datetime,
                          SITE_URL=SITE_URL)
@@ -350,15 +403,68 @@ def index():
 # Individual post page
 @app.route('/posts/<slug>')
 def post_detail(slug):
-    title= slug.replace('-',' ')
-    post = Post.query.filter_by(title=title).first_or_404()
-    return render_template('post_detail.html', post=post, SITE_URL=SITE_URL)
+    # Find post by matching cleaned slug
+    all_posts = Post.query.all()
+    for post in all_posts:
+        post_slug = create_slug(post.title)
+        if post_slug == slug:
+            return render_template('post_detail.html', post=post, SITE_URL=SITE_URL)
+    
+    # If not found by slug, try direct title match (backward compatibility)
+    title = slug.replace('-', ' ')
+    post = Post.query.filter_by(title=title).first()
+    if post:
+        return render_template('post_detail.html', post=post, SITE_URL=SITE_URL)
+    
+    # Return 404 if not found
+    from flask import abort
+    abort(404)
+
 
 # All posts listing
 @app.route('/posts')
 def posts():
     all_posts = Post.query.order_by(Post.date_posted.desc()).all()
     return render_template('posts.html', posts=all_posts, datetime=datetime, SITE_URL=SITE_URL)
+
+
+# Services page
+@app.route('/services')
+def services():
+    all_services = Service.query.filter_by(is_active=True).order_by(Service.created_at.asc()).all()
+    admin = Admin.query.first()
+    return render_template('services.html', 
+                         services=all_services, 
+                         admin=admin,
+                         datetime=datetime,
+                         SITE_URL=SITE_URL)
+
+
+# Book a specific service
+@app.route('/book/service/<int:service_id>', methods=['GET', 'POST'])
+def book_service(service_id):
+    service = Service.query.get_or_404(service_id)
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        
+        if name and email and phone:
+            try:
+                booking = Booking(name=name, email=email, phone=phone)
+                db.session.add(booking)
+                db.session.commit()
+                flash(f'Thank you {name}, your booking for "{service.title}" has been received! We will contact you soon.', 'success')
+                return redirect(url_for('services'))
+            except Exception as e:
+                db.session.rollback()
+                flash('Sorry, there was an error processing your booking. Please try again.', 'danger')
+        else:
+            flash('Please fill in all fields.', 'danger')
+    
+    return render_template('book_service.html', service=service, SITE_URL=SITE_URL)
+
 
 # Workshops page
 @app.route('/workshops')
@@ -371,7 +477,6 @@ def workshops():
             workshop.slug = workshop.title.replace(" ", "_")  # simple slug
 
     return render_template('workshops.html', workshops=all_workshops, datetime=datetime, SITE_URL=SITE_URL)
-
 
 
 # Booking route
@@ -394,6 +499,7 @@ def book():
         flash('Please fill in all fields.', 'danger')
     
     return redirect(url_for('index'))
+
 
 #gallery
 @app.route('/gallery')
@@ -432,6 +538,7 @@ def privacy():
     admin = Admin.query.first()
     return render_template('privacy.html', admin=admin, datetime=datetime, SITE_URL=SITE_URL)
 
+
 # --- ADMIN LOGIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -445,6 +552,7 @@ def admin_login():
         else:
             flash("Invalid username or password", "danger")
     return render_template('admin_login.html', SITE_URL=SITE_URL)
+
 
 # --- ADMIN DASHBOARD ---
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
@@ -509,6 +617,35 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
+
+        # Add Service
+        elif 'service_title' in request.form:
+            title = request.form.get('service_title', '').strip()
+            description = request.form.get('service_description', '').strip()
+            price = request.form.get('service_price', '').strip()
+            content_format = request.form.get('service_format', 'html')
+            action_type = request.form.get('service_action_type', 'book')
+            action_link = request.form.get('service_action_link', '').strip() or None
+            
+            if not title or not description or not price:
+                flash("Service title, description, and price are required", "danger")
+            else:
+                try:
+                    service = Service(
+                        title=title,
+                        description=description,
+                        price=price,
+                        content_format=content_format,
+                        action_type=action_type,
+                        action_link=action_link
+                    )
+                    db.session.add(service)
+                    db.session.commit()
+                    flash("Service added successfully", "success")
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error adding service: {e}", "danger")
+
          # --- Site Settings Logic ---
         if request.method == 'POST':
             # --- Update Site Settings ---
@@ -546,27 +683,98 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error deleting site settings: {e}", "danger")
-       
 
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    services = Service.query.order_by(Service.created_at.desc()).all()
     bookings = Booking.query.order_by(Booking.created_at.desc()).all()
     site_settings = SiteSettings.query.first()
     return render_template('admin_dashboard.html', 
                          posts=posts, 
                          workshops=workshops, 
+                         services=services,
                          bookings=bookings,
                          admin=admin,
                          site_settings=site_settings,
                          datetime=datetime,
                          SITE_URL=SITE_URL)
 
+
+# --- ADMIN SERVICE MANAGEMENT ---
+@app.route('/admin/service/edit/<int:service_id>', methods=['GET', 'POST'])
+def edit_service(service_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    service = Service.query.get_or_404(service_id)
+    
+    if request.method == 'POST':
+        service.title = request.form.get('service_title', '').strip()
+        service.description = request.form.get('service_description', '').strip()
+        service.price = request.form.get('service_price', '').strip()
+        service.content_format = request.form.get('service_format', 'html')
+        service.action_type = request.form.get('service_action_type', 'book')
+        service.action_link = request.form.get('service_action_link', '').strip() or None
+        service.is_active = 'service_is_active' in request.form
+        
+        if not service.title or not service.description or not service.price:
+            flash("Title, description, and price are required", "danger")
+        else:
+            try:
+                db.session.commit()
+                flash("Service updated successfully", "success")
+                return redirect(url_for('admin_dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error updating service: {e}", "danger")
+    
+    return render_template('edit_service.html', service=service, SITE_URL=SITE_URL)
+
+
+@app.route('/admin/service/delete/<int:service_id>', methods=['POST'])
+def delete_service(service_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    service = Service.query.get_or_404(service_id)
+    
+    try:
+        db.session.delete(service)
+        db.session.commit()
+        flash(f'Service "{service.title}" deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting service: {e}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/service/toggle/<int:service_id>', methods=['POST'])
+def toggle_service(service_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    service = Service.query.get_or_404(service_id)
+    service.is_active = not service.is_active
+    
+    try:
+        db.session.commit()
+        status = "activated" if service.is_active else "deactivated"
+        flash(f'Service "{service.title}" {status} successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating service: {e}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
+
+
 # --- LOGOUT ---
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('admin_login'))
+
 
 # --- RUN APP ---
 if __name__ == '__main__':

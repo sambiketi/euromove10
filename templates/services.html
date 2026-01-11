@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .services-container {
+        padding: 2rem 0;
+    }
+    
+    .services-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .services-header h1 {
+        color: var(--dark-green);
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .services-header p {
+        color: var(--text-light);
+        font-size: 1.2rem;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .service-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid var(--light-brown);
+    }
+    
+    .service-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .service-content {
+        padding: 1.5rem;
+    }
+    
+    .service-title {
+        color: var(--dark-brown);
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .service-price {
+        color: var(--green);
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--light-brown);
+    }
+    
+    .service-description {
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        min-height: 80px;
+    }
+    
+    .service-description p {
+        margin-bottom: 0.5rem;
+    }
+    
+    .service-description ul, .service-description ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .service-description li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .service-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: auto;
+    }
+    
+    .btn-book {
+        background: linear-gradient(135deg, var(--green), var(--dark-green));
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        flex: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-book:hover {
+        background: linear-gradient(135deg, var(--dark-green), var(--green));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-view {
+        background: var(--brown);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        flex: 1;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view:hover {
+        background: var(--dark-brown);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(141, 110, 99, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .no-services {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 12px;
+        border: 2px dashed var(--light-brown);
+    }
+    
+    .no-services h3 {
+        color: var(--dark-brown);
+        margin-bottom: 1rem;
+    }
+    
+    .no-services p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .services-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .services-header h1 {
+            font-size: 2rem;
+        }
+        
+        .services-header p {
+            font-size: 1.1rem;
+        }
+        
+        .service-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="services-container">
+    <div class="services-header">
+        <h1>Our Services</h1>
+        <p>We provide comprehensive support for students and professionals seeking opportunities in Europe. Choose from our range of services designed to help you achieve your goals.</p>
+    </div>
+    
+    {% if services %}
+        <div class="services-grid">
+            {% for service in services %}
+            <div class="service-card">
+                <div class="service-content">
+                    <h3 class="service-title">{{ service.title }}</h3>
+                    <div class="service-price">{{ service.price }}</div>
+                    
+                    <div class="service-description">
+                        {{ service.rendered_content() | safe }}
+                    </div>
+                    
+                    <div class="service-actions">
+                        {% if service.action_type == 'book' %}
+                            <a href="{{ url_for('book_service', service_id=service.id) }}" class="btn-book">
+                                Book Now
+                            </a>
+                        {% elif service.action_type == 'view' and service.action_link %}
+                            <a href="{{ service.action_link }}" class="btn-view" target="_blank">
+                                View Course
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-services">
+            <h3>No Services Available</h3>
+            <p>We are currently updating our service offerings. Please check back soon or contact us for more information.</p>
+            {% if admin %}
+                <div style="margin-top: 1.5rem;">
+                    <p><strong>Contact Information:</strong></p>
+                    <p>Email: {{ admin.email_address }}</p>
+                    <p>WhatsApp: {{ admin.whatsapp_number }}</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
