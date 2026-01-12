@@ -768,7 +768,40 @@ def toggle_service(service_id):
     
     return redirect(url_for('admin_dashboard'))
 
-
+#book service route
+# Book a specific service
+@app.route('/book/service/<int:service_id>', methods=['GET', 'POST'])
+def book_service(service_id):
+    try:
+        service = Service.query.get_or_404(service_id)
+        
+        if request.method == 'POST':
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()
+            
+            print(f"Booking attempt: name={name}, email={email}, phone={phone}")  # Debug
+            
+            if name and email and phone:
+                try:
+                    booking = Booking(name=name, email=email, phone=phone)
+                    db.session.add(booking)
+                    db.session.commit()
+                    flash(f'Thank you {name}, your booking for "{service.title}" has been received! We will contact you soon.', 'success')
+                    return redirect(url_for('services'))
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Database error: {e}")  # Debug
+                    flash('Sorry, there was an error processing your booking. Please try again.', 'danger')
+            else:
+                flash('Please fill in all fields.', 'danger')
+        
+        return render_template('book_service.html', service=service, SITE_URL=SITE_URL)
+    
+    except Exception as e:
+        print(f"Route error: {e}")  # Debug
+        flash('An error occurred. Please try again.', 'danger')
+        return redirect(url_for('services'))
 # --- LOGOUT ---
 @app.route('/admin/logout')
 def admin_logout():

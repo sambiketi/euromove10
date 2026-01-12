@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .booking-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    
+    .booking-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .booking-header h2 {
+        color: var(--dark-green);
+        margin-bottom: 0.5rem;
+    }
+    
+    .service-info {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
+        margin-bottom: 2rem;
+        border: 1px solid var(--light-brown);
+    }
+    
+    .service-title {
+        color: var(--dark-brown);
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .service-price {
+        color: var(--green);
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+    
+    .booking-form {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
+        border: 1px solid var(--light-brown);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--light-brown);
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-size: 16px;
+        background: var(--cream);
+        transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--green);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, var(--green), var(--dark-green));
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        background: linear-gradient(135deg, var(--dark-green), var(--green));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+    }
+    
+    .back-link {
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    
+    .back-link a {
+        color: var(--text-light);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .back-link a:hover {
+        color: var(--green);
+        text-decoration: underline;
+    }
+</style>
+
+<div class="booking-container">
+    <div class="booking-header">
+        <h2>Book Service</h2>
+        <p>Fill out the form below to book this service</p>
+    </div>
+    
+    <div class="service-info">
+        <h3 class="service-title">{{ service.title }}</h3>
+        <div class="service-price">{{ service.price }}</div>
+        <p>{{ service.description[:150] }}...</p>
+    </div>
+    
+    <div class="booking-form">
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+            </div>
+            
+            <button type="submit" class="btn-submit">Submit Booking</button>
+        </form>
+        
+        <div class="back-link">
+            <a href="{{ url_for('services') }}">← Back to Services</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
