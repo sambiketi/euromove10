@@ -390,12 +390,25 @@ def index():
     services = Service.query.filter_by(is_active=True).order_by(Service.created_at.asc()).limit(3).all()
     # Get admin contact info
     admin = Admin.query.first()
-    
+    # Fetch gallery images
+    rows = db.session.execute(db.text("""
+    SELECT item_id, source, image_url, title, created_at
+    FROM gallery
+    WHERE image_url IS NOT NULL AND image_url != 'No image'
+    ORDER BY created_at DESC
+    """)).fetchall()
+
+
+    gallery = [
+    {"item_id": r.item_id, "source": r.source, "image_url": r.image_url, "title": r.title, "created_at": r.created_at}
+    for r in rows
+    ]
     return render_template('index.html', 
                          latest_post=latest_post, 
                          upcoming_workshops=upcoming_workshops,
                          services=services,
                          admin=admin,
+                         gallery=gallery,
                          datetime=datetime,
                          SITE_URL=SITE_URL)
 

@@ -1,64 +1,7 @@
 {% extends "base.html" %}
 
-{% block extra_css %}
-<style>
-/* Horizontal scrolling gallery */
-.horizontal-gallery {
-    display: flex;
-    overflow-x: auto;
-    gap: 1rem;
-    padding: 1rem 0;
-    scroll-behavior: smooth;
-    scrollbar-width: none; /* Firefox */
-}
-.horizontal-gallery::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
-}
-
-/* Gallery item */
-.horizontal-gallery .gallery-item {
-    position: relative;
-    flex: 0 0 auto;
-    width: 250px;
-    height: 150px;
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: default;
-    transition: transform 0.3s ease;
-}
-
-.horizontal-gallery .gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
-}
-
-/* Hover zoom */
-.horizontal-gallery .gallery-item:hover img {
-    transform: scale(1.15);
-}
-
-/* Title overlay */
-.horizontal-gallery .gallery-item .overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.9rem;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-</style>
-{% endblock %}
-
 {% block content %}
+<!-- Hero Section -->
 <section class="hero" style="text-align: center; padding: 3rem 1rem; background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%); border-radius: 15px; margin: 2rem 0;">
     <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 1rem;">Your Gateway to Opportunities in Europe</h2>
 </section>
@@ -110,24 +53,20 @@
     {% endif %}
 </section>
 
-<!-- Horizontal Scrolling Gallery Section -->
+<!-- Horizontal Scrolling Gallery -->
+{% if gallery %}
 <section style="margin: 3rem 0;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Gallery Highlights</h3>
-    {% if gallery %}
-    <div class="horizontal-gallery" id="horizontalGallery">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Gallery</h3>
+    <div class="horizontal-gallery" id="horizontal-gallery">
         {% for item in gallery %}
-            {% if item.image_url and item.image_url != "No image" %}
-            <div class="gallery-item">
-                <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
-                <div class="overlay">{{ item.title }}</div>
-            </div>
-            {% endif %}
+        <div class="gallery-card">
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+            <div class="overlay">{{ item.title }}</div>
+        </div>
         {% endfor %}
     </div>
-    {% else %}
-    <p style="text-align: center; color: var(--text-light);">No images available yet.</p>
-    {% endif %}
 </section>
+{% endif %}
 
 <!-- Upcoming Workshops -->
 <section style="margin: 3rem 0;">
@@ -190,31 +129,67 @@
 </section>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+/* Horizontal scrolling gallery */
+.horizontal-gallery {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 1rem 0;
+    scroll-behavior: smooth;
+}
+.horizontal-gallery::-webkit-scrollbar {
+    display: none;
+}
+.gallery-card {
+    min-width: 250px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    cursor: default;
+    transition: transform 0.3s ease;
+}
+.gallery-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+.gallery-card:hover img {
+    transform: scale(1.1);
+}
+.overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
-// Auto horizontal scroll for gallery
-(function() {
-    const gallery = document.getElementById('horizontalGallery');
-    if (!gallery) return;
-
+// Auto horizontal scroll
+const gallery = document.getElementById('horizontal-gallery');
+if(gallery){
     let scrollAmount = 0;
-    const scrollStep = 1; // pixels per interval
-    const scrollDelay = 20; // ms
-
-    function autoScroll() {
-        if (scrollAmount >= gallery.scrollWidth - gallery.clientWidth) {
-            scrollAmount = 0;
-            gallery.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-            scrollAmount += scrollStep;
-            gallery.scrollTo({ left: scrollAmount });
-        }
-    }
-
-    let scrollInterval = setInterval(autoScroll, scrollDelay);
-
-    gallery.addEventListener('mouseenter', () => clearInterval(scrollInterval));
-    gallery.addEventListener('mouseleave', () => scrollInterval = setInterval(autoScroll, scrollDelay));
-})();
+    let maxScroll = gallery.scrollWidth - gallery.clientWidth;
+    let direction = 1;
+    setInterval(() => {
+        if(scrollAmount >= maxScroll) direction = -1;
+        if(scrollAmount <= 0) direction = 1;
+        scrollAmount += direction * 1; // pixels per interval
+        gallery.scrollTo({left: scrollAmount, behavior: 'smooth'});
+    }, 20); // adjust speed here
+}
 </script>
 {% endblock %}
