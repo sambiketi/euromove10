@@ -3,11 +3,13 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero" style="text-align: center; padding: 3rem 1rem; background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%); border-radius: 15px; margin: 2rem 0;">
-    <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 1rem;">Your Gateway to Opportunities in Europe</h2>
+    {% if hero_heading %}
+    <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 1rem;">{{ hero_heading }}</h2>
+    {% endif %}
 </section>
 
 <!-- Services Section -->
-<section style="margin: 3rem 0;">
+<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
     <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Our Services</h3>
     <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for service in services %}
@@ -33,16 +35,18 @@
 </section>
 
 <!-- Latest Post Section -->
-<section style="margin: 3rem 0;">
+<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
     <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Latest Update</h3>
     {% if latest_post %}
     <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 2rem; margin: 1.5rem 0;">
         {% if latest_post.image_url %}
-        <img src="{{ latest_post.image_url }}" alt="{{ latest_post.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem;">
+        <img src="{{ latest_post.image_url }}" alt="{{ latest_post.title }}" style="width: 80%; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         {% endif %}
-        <h4 style="color: var(--dark-green); margin-top: 0; font-size: 1.5rem;">{{ latest_post.title }}</h4>
+        <h4 style="color: var(--dark-green); margin-top: 1rem; font-size: 1.5rem;">{{ latest_post.title }}</h4>
         <div class="post-content" style="color: var(--text-dark); line-height: 1.6;">
-            {{ latest_post.rendered_content()|safe }}
+            <div class="excerpt">{{ latest_post.rendered_content()[:250]|safe }}...</div>
+            <div class="full-content" style="display:none;">{{ latest_post.rendered_content()|safe }}</div>
+            <button class="read-more-btn" onclick="this.style.display='none'; this.previousElementSibling.style.display='block';">Read More</button>
         </div>
         <small style="color: var(--text-light);">
             <em>Posted on {{ latest_post.date_posted.strftime('%B %d, %Y') if latest_post.date_posted else 'Unknown date' }}</em>
@@ -69,17 +73,19 @@
 {% endif %}
 
 <!-- Upcoming Workshops -->
-<section style="margin: 3rem 0;">
+<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
     <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Upcoming Workshops</h3>
     <div class="workshops-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for workshop in upcoming_workshops %}
         <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
             <h4 style="color: var(--dark-green); margin-top: 0;">{{ workshop.title }}</h4>
             {% if workshop.image_url %}
-            <img src="{{ workshop.image_url }}" alt="{{ workshop.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
+            <img src="{{ workshop.image_url }}" alt="{{ workshop.title }}" style="width: 80%; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: auto; object-fit: cover;">
             {% endif %}
             <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6;">
-                {{ workshop.rendered_content()|safe }}
+                <div class="excerpt">{{ workshop.rendered_content()[:250]|safe }}...</div>
+                <div class="full-content" style="display:none;">{{ workshop.rendered_content()|safe }}</div>
+                <button class="read-more-btn" onclick="this.style.display='none'; this.previousElementSibling.style.display='block';">Read More</button>
             </div>
             <small style="color: var(--text-light);">
                 <em>Posted on {{ workshop.date_posted.strftime('%B %d, %Y') if workshop.date_posted else 'Unknown date' }}</em>
@@ -131,6 +137,11 @@
 
 {% block extra_css %}
 <style>
+/* Fonts */
+body {
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
 /* Horizontal scrolling gallery */
 .horizontal-gallery {
     display: flex;
@@ -173,6 +184,21 @@
     font-size: 0.9rem;
     text-align: center;
 }
+
+/* Read More Button */
+.read-more-btn {
+    margin-top: 0.5rem;
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.read-more-btn:hover {
+    background: var(--dark-green);
+}
 </style>
 {% endblock %}
 
@@ -184,12 +210,17 @@ if(gallery){
     let scrollAmount = 0;
     let maxScroll = gallery.scrollWidth - gallery.clientWidth;
     let direction = 1;
+    let pause = false;
+    gallery.addEventListener('mouseenter', ()=>pause=true);
+    gallery.addEventListener('mouseleave', ()=>pause=false);
     setInterval(() => {
-        if(scrollAmount >= maxScroll) direction = -1;
-        if(scrollAmount <= 0) direction = 1;
-        scrollAmount += direction * 1; // pixels per interval
-        gallery.scrollTo({left: scrollAmount, behavior: 'smooth'});
-    }, 20); // adjust speed here
+        if(!pause){
+            if(scrollAmount >= maxScroll) direction = -1;
+            if(scrollAmount <= 0) direction = 1;
+            scrollAmount += direction * 1;
+            gallery.scrollTo({left: scrollAmount, behavior: 'smooth'});
+        }
+    }, 20);
 }
 </script>
 {% endblock %}

@@ -3,38 +3,67 @@
 {% block title %}Workshops - Euromove{% endblock %}
 
 {% block content %}
+<section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+    <h1 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; margin-bottom: 2rem;">Our Workshops</h1>
 
-<section style="margin: 2rem 0;">
-    <h1 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Our Workshops</h1>
+    {% if workshops %}
+    <div class="workshops-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+        {% for workshop in workshops %}
+        <div class="workshop-card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5rem; transition: transform 0.3s ease;">
+            
+            {% if workshop.image_url %}
+            <img src="{{ workshop.image_url }}" alt="{{ workshop.title }}" style="width: 80%; display:block; margin: 0 auto 1rem auto; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            {% endif %}
 
-```
-<div class="workshops-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 2rem;">
-    {% for workshop in workshops %}
-    <div id="{{ workshop.slug }}" class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
-        {% if workshop.image_url %}
-        <img src="{{ workshop.image_url }}" alt="{{ workshop.title }}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;">
-        {% endif %}
-        
-        <h3 style="color: var(--dark-green); margin-top: 0;">{{ workshop.title }}</h3>
+            <h3 style="color: var(--dark-green); margin-top: 0; font-size: 1.5rem; margin-bottom: 0.75rem;">{{ workshop.title }}</h3>
 
-        <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6;">
-            {{ workshop.rendered_content()|safe }}
+            <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6; margin-bottom: 1rem;">
+                <div class="excerpt">{{ workshop.rendered_content()[:250]|safe }}...</div>
+                <div class="full-content" style="display:none;">{{ workshop.rendered_content()|safe }}</div>
+                <button class="read-more-btn" style="margin-top:0.5rem; background: var(--green); color: white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Read More</button>
+            </div>
+
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-brown);">
+                <small style="color: var(--text-light);">
+                    <em>Posted on {{ workshop.date_posted.strftime('%B %d, %Y') if workshop.date_posted else 'Unknown date' }}</em>
+                </small>
+            </div>
         </div>
-
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-brown);">
-            <small style="color: var(--text-light);">
-                <em>Posted on {{ workshop.date_posted.strftime('%B %d, %Y') if workshop.date_posted else 'Unknown date' }}</em>
-            </small>
-        </div>
+        {% endfor %}
     </div>
     {% else %}
-    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-        <p style="color: var(--text-light); font-size: 1.1rem;">No workshops available yet. Check back soon for upcoming events!</p>
-        <a href="{{ url_for('index') }}#book" class="btn btn-primary">Book a Consultation</a>
+    <div style="text-align:center; padding:3rem;">
+        <p style="color: var(--text-light); font-size:1.1rem;">No workshops available yet. Check back soon for upcoming events!</p>
+        <a href="{{ url_for('index') }}#book" class="btn btn-primary" style="display:inline-block; background: var(--green); color:white; padding:0.75rem 1.5rem; border-radius:6px; text-decoration:none;">Book a Consultation</a>
     </div>
-    {% endfor %}
-</div>
-```
-
+    {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.workshop-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Read More button hover effect */
+.read-more-btn:hover {
+    background: var(--dark-green);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Read More toggle for workshops
+document.querySelectorAll('.read-more-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const fullContent = this.previousElementSibling;
+        fullContent.style.display = 'block';
+        this.style.display = 'none';
+    });
+});
+</script>
 {% endblock %}
