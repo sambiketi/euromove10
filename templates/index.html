@@ -15,10 +15,19 @@
         {% for service in services %}
         <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
             <h4 style="color: var(--dark-green); margin-top: 0;">{{ service.title }}</h4>
-            <div style="color: var(--green); font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;">{{ service.price }}</div>
-            <div class="service-content" style="color: var(--text-dark); line-height: 1.6;">
-                {{ service.rendered_content()|safe }}
+
+            <!-- Price hidden -->
+            <div style="color: var(--green); font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem; display:none;">
+                {{ service.price }}
             </div>
+
+            <!-- Service content with same Read More logic as posts/workshops -->
+            <div class="service-content" style="color: var(--text-dark); line-height: 1.6;">
+                <div class="excerpt">{{ service.rendered_content()[:180]|safe }}...</div>
+                <div class="full-content" style="display:none;">{{ service.rendered_content()|safe }}</div>
+                <button class="read-more-btn">Read More</button>
+            </div>
+
             {% if service.action_type == 'book' %}
             <a href="{{ url_for('book_service', service_id=service.id) }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Book Now</a>
             {% elif service.action_type == 'view' and service.action_link %}
@@ -135,7 +144,7 @@
 </section>
 {% endblock %}
 
-{% block extra_css %}
+{% block extra_css %} 
 <style>
 /* Fonts */
 body {
@@ -222,5 +231,17 @@ if(gallery){
         }
     }, 20);
 }
+
+// Read More toggle (services + posts + workshops)
+document.querySelectorAll('.read-more-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const full = this.previousElementSibling;
+        const excerpt = full.previousElementSibling;
+        const expanded = full.style.display === 'block';
+        full.style.display = expanded ? 'none' : 'block';
+        excerpt.style.display = expanded ? 'block' : 'none';
+        this.textContent = expanded ? 'Read More' : 'Read Less';
+    });
+});
 </script>
 {% endblock %}
