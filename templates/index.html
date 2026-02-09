@@ -55,7 +55,7 @@
         <div class="post-content" style="color: var(--text-dark); line-height: 1.6;">
             <div class="excerpt">{{ latest_post.rendered_content()[:250]|safe }}...</div>
             <div class="full-content" style="display:none;">{{ latest_post.rendered_content()|safe }}</div>
-            <button class="read-more-btn" onclick="this.style.display='none'; this.previousElementSibling.style.display='block';">Read More</button>
+            <button class="read-more-btn">Read More</button>
         </div>
         <small style="color: var(--text-light);">
             <em>Posted on {{ latest_post.date_posted.strftime('%B %d, %Y') if latest_post.date_posted else 'Unknown date' }}</em>
@@ -94,7 +94,7 @@
             <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6;">
                 <div class="excerpt">{{ workshop.rendered_content()[:250]|safe }}...</div>
                 <div class="full-content" style="display:none;">{{ workshop.rendered_content()|safe }}</div>
-                <button class="read-more-btn" onclick="this.style.display='none'; this.previousElementSibling.style.display='block';">Read More</button>
+                <button class="read-more-btn">Read More</button>
             </div>
             <small style="color: var(--text-light);">
                 <em>Posted on {{ workshop.date_posted.strftime('%B %d, %Y') if workshop.date_posted else 'Unknown date' }}</em>
@@ -232,16 +232,25 @@ if(gallery){
     }, 20);
 }
 
-// Read More toggle (services + posts + workshops)
-document.querySelectorAll('.read-more-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const full = this.previousElementSibling;
-        const excerpt = full.previousElementSibling;
-        const expanded = full.style.display === 'block';
-        full.style.display = expanded ? 'none' : 'block';
-        excerpt.style.display = expanded ? 'block' : 'none';
-        this.textContent = expanded ? 'Read More' : 'Read Less';
-    });
+// Read More toggle using event delegation
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('read-more-btn')) {
+        const btn = event.target;
+        const contentContainer = btn.closest('.service-content, .post-content, .workshop-content');
+        
+        if (contentContainer) {
+            const full = contentContainer.querySelector('.full-content');
+            const excerpt = contentContainer.querySelector('.excerpt');
+            
+            if (full && excerpt) {
+                const expanded = full.style.display === 'block';
+                full.style.display = expanded ? 'none' : 'block';
+                excerpt.style.display = expanded ? 'block' : 'none';
+                btn.textContent = expanded ? 'Read More' : 'Read Less';
+            }
+        }
+        event.preventDefault();
+    }
 });
 </script>
 {% endblock %}
