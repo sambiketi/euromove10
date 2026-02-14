@@ -541,7 +541,7 @@ def book_service(service_id):
     
     # 2. Handle GET request - show booking form
     if request.method == 'GET':
-        return render_template('book_service.html', service=service, SITE_URL=SITE_URL)
+        return render_template('book_service.html', service=service, datetime=datetime, SITE_URL=SITE_URL)
     
     # 3. Handle POST request - process booking
     elif request.method == 'POST':
@@ -579,6 +579,7 @@ def book_service(service_id):
             return render_template('book_service.html', 
                                  service=service, 
                                  form_data={'name': name, 'phone': phone},
+                                 datetime=datetime,
                                  SITE_URL=SITE_URL)
         
         # 4. Create and save booking with enhanced error handling
@@ -618,6 +619,7 @@ def book_service(service_id):
         return render_template('book_service.html', 
                              service=service, 
                              form_data={'name': name, 'phone': phone},
+                             datetime=datetime,
                              SITE_URL=SITE_URL)
     
     # 5. Invalid HTTP method
