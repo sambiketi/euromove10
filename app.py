@@ -148,8 +148,67 @@ class Booking(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
-    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=True)  # Link to service
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id', ondelete='SET NULL'), nullable=True)  # Link to service
     created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    # Relationship
+    service = db.relationship('Service', backref='bookings', lazy=True)
+    
+    # Validation methods (added for air-tight implementation)
+    @staticmethod
+    def validate_email(email: str) -> bool:
+        """Email validation"""
+        import re
+        if not email or len(email) > 100:
+            return False
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(pattern, email))
+    
+    @staticmethod
+    def validate_phone(phone: str) -> bool:
+        """Phone validation"""
+        import re
+        if not phone or len(phone) > 20:
+            return False
+        pattern = r'^[\+\d\s\-\(\)]{10,20}$'
+        return bool(re.match(pattern, phone))
+    
+    @staticmethod
+    def validate_name(name: str) -> bool:
+        """Name validation"""
+        import re
+        if not name or len(name) > 100:
+            return False
+        pattern = r'^[A-Za-z\s\-\'\.]{2,100}$'
+        return bool(re.match(pattern, name))
+    
+    @classmethod
+    def create_validated(cls, name: str, email: str, phone: str, service_id: int = None):
+        """Create booking with validation"""
+        name = name.strip()
+        email = email.strip().lower()
+        phone = phone.strip()
+        
+        if not cls.validate_name(name):
+            raise ValueError(f'Invalid name: {name}')
+        if not cls.validate_email(email):
+            raise ValueError(f'Invalid email: {email}')
+        if not cls.validate_phone(phone):
+            raise ValueError(f'Invalid phone: {phone}')
+        
+        return cls(name=name, email=email, phone=phone, service_id=service_id)
+    
+    def to_dict(self):
+        """Serialize to dictionary"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email,
+            'phone': self.phone,
+            'service_id': self.service_id,
+            'service_title': self.service.title if self.service else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -175,6 +234,11 @@ class Service(db.Model):
     action_link = db.Column(db.String(300), nullable=True)  # optional for 'view course'
     created_at = db.Column(db.DateTime, default=datetime.now)
     is_active = db.Column(db.Boolean, default=True)
+    
+    # Bookability check (added for air-tight implementation)
+    def is_bookable(self) -> bool:
+        """Check if this service can be booked"""
+        return self.is_active and self.action_type == 'book'
     
     def rendered_content(self):
         if self.content_format == 'markdown':
@@ -457,27 +521,109 @@ def services():
 # Book a specific service
 @app.route('/book/service/<int:service_id>', methods=['GET', 'POST'])
 def book_service(service_id):
-    service = Service.query.get_or_404(service_id)
+    # ========================================================================
+    # AIR-TIGHT BOOKING IMPLEMENTATION
+    # ========================================================================
     
-    if request.method == 'POST':
+    # 1. Service validation with enhanced checks
+    service = Service.query.get(service_id)
+    if not service:
+        flash('Service not found.', 'danger')
+        return redirect(url_for('services'))
+    
+    if not service.is_active:
+        flash('This service is currently unavailable.', 'warning')
+        return redirect(url_for('services'))
+    
+    if not service.is_bookable():
+        flash('This service cannot be booked online. Please contact us for assistance.', 'warning')
+        return redirect(url_for('services'))
+    
+    # 2. Handle GET request - show booking form
+    if request.method == 'GET':
+        return render_template('book_service.html', service=service, SITE_URL=SITE_URL)
+    
+    # 3. Handle POST request - process booking
+    elif request.method == 'POST':
+        # Get and sanitize form data
         name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip()
+        email = request.form.get('email', '').strip().lower()
         phone = request.form.get('phone', '').strip()
         
-        if name and email and phone:
-            try:
-                booking = Booking(name=name, email=email, phone=phone, service_id=service.id)
-                db.session.add(booking)
-                db.session.commit()
-                flash(f'Thank you {name}, your booking for "{service.title}" has been received! We will contact you soon.', 'success')
-                return redirect(url_for('services'))
-            except Exception as e:
-                db.session.rollback()
-                flash('Sorry, there was an error processing your booking. Please try again.', 'danger')
-        else:
-            flash('Please fill in all fields.', 'danger')
+        # Enhanced validation
+        validation_errors = []
+        
+        # Name validation
+        if not name:
+            validation_errors.append('Name is required')
+        elif not Booking.validate_name(name):
+            validation_errors.append('Please enter a valid name (2-100 characters, letters only)')
+        
+        # Email validation
+        if not email:
+            validation_errors.append('Email is required')
+        elif not Booking.validate_email(email):
+            validation_errors.append('Please enter a valid email address')
+        
+        # Phone validation
+        if not phone:
+            validation_errors.append('Phone number is required')
+        elif not Booking.validate_phone(phone):
+            validation_errors.append('Please enter a valid phone number (10-20 digits)')
+        
+        # If validation errors, show them all
+        if validation_errors:
+            for error in validation_errors:
+                flash(error, 'danger')
+            # Re-render form with preserved data (except email for privacy)
+            return render_template('book_service.html', 
+                                 service=service, 
+                                 form_data={'name': name, 'phone': phone},
+                                 SITE_URL=SITE_URL)
+        
+        # 4. Create and save booking with enhanced error handling
+        try:
+            # Use validated creation method
+            booking = Booking.create_validated(
+                name=name,
+                email=email,
+                phone=phone,
+                service_id=service.id
+            )
+            
+            db.session.add(booking)
+            db.session.commit()
+            
+            # Success message with details
+            success_message = (
+                f'Thank you {booking.name}! '
+                f'Your booking for "{service.title}" has been received. '
+                f'Confirmation sent to {booking.email}.'
+            )
+            
+            flash(success_message, 'success')
+            return redirect(url_for('services'))
+            
+        except ValueError as e:
+            # Validation error from create_validated
+            db.session.rollback()
+            flash(f'Validation error: {str(e)}', 'danger')
+            
+        except Exception as e:
+            # Catch-all for database and other errors
+            db.session.rollback()
+            flash('Sorry, there was an error processing your booking. Please try again.', 'danger')
+        
+        # Re-render form on error with preserved data
+        return render_template('book_service.html', 
+                             service=service, 
+                             form_data={'name': name, 'phone': phone},
+                             SITE_URL=SITE_URL)
     
-    return render_template('book_service.html', service=service, SITE_URL=SITE_URL)
+    # 5. Invalid HTTP method
+    else:
+        flash('Invalid request method.', 'danger')
+        return redirect(url_for('services'))
 
 
 # Workshops page

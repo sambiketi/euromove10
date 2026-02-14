@@ -12,11 +12,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Empower Kenyans to work and study in Europe through comprehensive services, workshops, and guidance.">
+    
+    <!-- Comprehensive favicon support for all devices -->
     {% if site_settings and site_settings.logo_url %}
+    <!-- Primary favicon -->
     <link rel="icon" href="{{ site_settings.logo_url }}" type="image/x-icon">
+    <!-- Apple Touch Icon (for iOS devices) -->
+    <link rel="apple-touch-icon" href="{{ site_settings.logo_url }}">
+    <!-- Safari pinned tab icon -->
+    <link rel="mask-icon" href="{{ site_settings.logo_url }}" color="#2e7d32">
     {% else %}
+    <!-- Fallback: Use emoji as PNG for maximum compatibility -->
+    <link rel="icon" type="image/png" href="https://emojicdn.elk.sh/%F0%9F%87%AA%F0%9F%87%BA?size=64&v=2">
+    <!-- SVG version for modern browsers -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇪🇺</text></svg>" type="image/svg+xml">
+    <!-- Apple Touch Icon fallback -->
+    <link rel="apple-touch-icon" href="https://emojicdn.elk.sh/%F0%9F%87%AA%F0%9F%87%BA?size=180&v=2">
     {% endif %}
+    
+    <!-- Theme color for mobile browsers -->
+    <meta name="theme-color" content="#2e7d32">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#2e7d32">
+    <meta name="msapplication-config" content="none">
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <title>{% block title %}Empower Kenyans to Work & Study in Europe{% endblock %}</title>
     <style>

@@ -2,6 +2,7 @@
 {% block content %}
 
 <style>
+    /* AIR-TIGHT BOOKING STYLES */
     .booking-container {
         max-width: 600px;
         margin: 0 auto;
@@ -11,11 +12,19 @@
     .booking-header {
         text-align: center;
         margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid var(--light-brown);
     }
     
     .booking-header h2 {
         color: var(--dark-green);
         margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+    
+    .booking-header p {
+        color: var(--text-light);
+        font-size: 1.1rem;
     }
     
     .service-info {
@@ -31,13 +40,21 @@
         color: var(--dark-brown);
         font-size: 1.5rem;
         margin-bottom: 0.5rem;
+        font-weight: 600;
     }
     
     .service-price {
         color: var(--green);
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: bold;
         margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--light-brown);
+    }
+    
+    .service-description {
+        color: var(--text-dark);
+        line-height: 1.6;
     }
     
     .booking-form {
@@ -50,13 +67,20 @@
     
     .form-group {
         margin-bottom: 1.5rem;
+        position: relative;
     }
     
     .form-group label {
         display: block;
         margin-bottom: 0.5rem;
         color: var(--text-dark);
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .form-group label.required::after {
+        content: " *";
+        color: #d32f2f;
     }
     
     .form-group input {
@@ -68,6 +92,7 @@
         font-size: 16px;
         background: var(--cream);
         transition: all 0.3s ease;
+        font-family: inherit;
     }
     
     .form-group input:focus {
@@ -75,6 +100,33 @@
         border-color: var(--green);
         background: white;
         box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+    }
+    
+    .form-group input.error {
+        border-color: #d32f2f;
+        background: #ffebee;
+    }
+    
+    .form-group .error-message {
+        color: #d32f2f;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .form-group input:invalid:not(:focus):not(:placeholder-shown) {
+        border-color: #d32f2f;
+    }
+    
+    .form-group input:invalid:not(:focus):not(:placeholder-shown) + .error-message {
+        display: block;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-top: 5px;
+        display: block;
     }
     
     .btn-submit {
@@ -88,65 +140,307 @@
         width: 100%;
         font-size: 16px;
         transition: all 0.3s ease;
+        font-family: inherit;
+        margin-top: 10px;
     }
     
-    .btn-submit:hover {
+    .btn-submit:hover:not(:disabled) {
         background: linear-gradient(135deg, var(--dark-green), var(--green));
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
     }
     
+    .btn-submit:active:not(:disabled) {
+        transform: translateY(0);
+    }
+    
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: var(--text-light);
+    }
+    
+    .btn-submit.loading {
+        position: relative;
+        color: transparent;
+    }
+    
+    .btn-submit.loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
     .back-link {
         text-align: center;
         margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--light-brown);
     }
     
     .back-link a {
-        color: var(--text-light);
+        color: var(--green);
         text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         transition: color 0.3s ease;
     }
     
     .back-link a:hover {
-        color: var(--green);
+        color: var(--dark-green);
         text-decoration: underline;
+    }
+    
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-weight: 500;
+    }
+    
+    .alert.success {
+        background: #e8f5e9;
+        color: var(--dark-green);
+        border: 1px solid #c8e6c9;
+    }
+    
+    .alert.error {
+        background: #ffebee;
+        color: #d32f2f;
+        border: 1px solid #ffcdd2;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .booking-container {
+            padding: 1rem;
+        }
+        
+        .booking-header h2 {
+            font-size: 1.7rem;
+        }
+        
+        .service-info,
+        .booking-form {
+            padding: 1.25rem;
+        }
     }
 </style>
 
+<script>
+    // Client-side validation for air-tight implementation
+    function validateName(name) {
+        const regex = /^[A-Za-z\s\-'\.]{2,100}$/;
+        return regex.test(name.trim());
+    }
+    
+    function validateEmail(email) {
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return regex.test(email.trim().toLowerCase());
+    }
+    
+    function validatePhone(phone) {
+        const regex = /^[\+\d\s\-\(\)]{10,20}$/;
+        return regex.test(phone.trim());
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('booking-form');
+        const submitButton = document.getElementById('submit-button');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        
+        // Real-time validation
+        function validateField(input, validator) {
+            const value = input.value.trim();
+            const isValid = validator(value);
+            const errorElement = input.nextElementSibling;
+            
+            if (value && !isValid) {
+                input.classList.add('error');
+                if (errorElement && errorElement.classList.contains('error-message')) {
+                    errorElement.style.display = 'block';
+                }
+                return false;
+            } else {
+                input.classList.remove('error');
+                if (errorElement && errorElement.classList.contains('error-message')) {
+                    errorElement.style.display = 'none';
+                }
+                return true;
+            }
+        }
+        
+        // Attach validation events
+        if (nameInput) {
+            nameInput.addEventListener('blur', () => validateField(nameInput, validateName));
+        }
+        if (emailInput) {
+            emailInput.addEventListener('blur', () => validateField(emailInput, validateEmail));
+        }
+        if (phoneInput) {
+            phoneInput.addEventListener('blur', () => validateField(phoneInput, validatePhone));
+        }
+        
+        // Form submission with validation
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Basic validation before submission
+                let isValid = true;
+                
+                if (nameInput && !validateField(nameInput, validateName)) isValid = false;
+                if (emailInput && !validateField(emailInput, validateEmail)) isValid = false;
+                if (phoneInput && !validateField(phoneInput, validatePhone)) isValid = false;
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    // Scroll to first error
+                    const firstError = document.querySelector('input.error');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
+                    }
+                    return;
+                }
+                
+                // Disable button to prevent double submission
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.classList.add('loading');
+                    submitButton.textContent = 'Processing...';
+                }
+            });
+        }
+        
+        // Auto-format phone number
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 10) {
+                    value = value.substring(0, 10);
+                }
+                if (value.length >= 7) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+                } else if (value.length >= 4) {
+                    value = value.replace(/(\d{3})(\d+)/, '$1-$2');
+                }
+                e.target.value = value;
+            });
+        }
+        
+        // Focus first field
+        if (nameInput && !nameInput.value) {
+            nameInput.focus();
+        }
+    });
+</script>
+
 <div class="booking-container">
+    <!-- Header -->
     <div class="booking-header">
-        <h2>Book Service</h2>
-        <p>Fill out the form below to book this service</p>
+        <h2>Book {{ service.title }}</h2>
+        <p>Complete the form below to book this service</p>
     </div>
     
+    <!-- Service Information -->
     <div class="service-info">
         <h3 class="service-title">{{ service.title }}</h3>
         <div class="service-price">{{ service.price }}</div>
-        <p>{{ service.description[:150] }}...</p>
+        <div class="service-description">
+            {{ service.description[:200] }}...
+        </div>
     </div>
     
+    <!-- Booking Form -->
     <div class="booking-form">
-        <form method="POST">
+        <form id="booking-form" method="POST" novalidate>
+            <!-- Name Field -->
             <div class="form-group">
-                <label for="name">Full Name *</label>
-                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                <label for="name" class="required">Full Name</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    placeholder="Enter your full name"
+                    value="{% if form_data %}{{ form_data.name }}{% endif %}"
+                    required
+                    minlength="2"
+                    maxlength="100"
+                    pattern="[A-Za-z\s\-'\.]{2,100}"
+                    title="Name must be 2-100 characters with only letters, spaces, hyphens, and apostrophes"
+                >
+                <div class="error-message">
+                    Please enter a valid name (2-100 characters, letters only)
+                </div>
+                <small class="help-text">As it appears on your official documents</small>
             </div>
             
+            <!-- Email Field -->
             <div class="form-group">
-                <label for="email">Email Address *</label>
-                <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                <label for="email" class="required">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="Enter your email address"
+                    required
+                    pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                    title="Please enter a valid email address"
+                >
+                <div class="error-message">
+                    Please enter a valid email address
+                </div>
+                <small class="help-text">We'll send confirmation to this address</small>
             </div>
             
+            <!-- Phone Field -->
             <div class="form-group">
-                <label for="phone">Phone Number *</label>
-                <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                <label for="phone" class="required">Phone Number</label>
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    placeholder="Enter your phone number"
+                    value="{% if form_data %}{{ form_data.phone }}{% endif %}"
+                    required
+                    pattern="[\+\d\s\-\(\)]{10,20}"
+                    title="Please enter a valid phone number (10-20 digits)"
+                >
+                <div class="error-message">
+                    Please enter a valid phone number (10-20 digits)
+                </div>
+                <small class="help-text">Include country code if outside Kenya</small>
             </div>
             
-            <button type="submit" class="btn-submit">Submit Booking</button>
+            <!-- Submit Button -->
+            <button type="submit" id="submit-button" class="btn-submit">
+                Submit Booking
+            </button>
         </form>
         
+        <!-- Back Link -->
         <div class="back-link">
-            <a href="{{ url_for('services') }}">← Back to Services</a>
+            <a href="{{ url_for('services') }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Services
+            </a>
         </div>
     </div>
 </div>
