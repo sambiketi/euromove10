@@ -34,6 +34,12 @@
         box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
         margin-bottom: 2rem;
         border: 1px solid var(--light-brown);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .service-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
     
     .service-title {
@@ -49,12 +55,63 @@
         font-weight: bold;
         margin-bottom: 1rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--light-brown);
+        border-bottom: 2px solid var(--light-brown);
     }
     
     .service-description {
         color: var(--text-dark);
         line-height: 1.6;
+        font-family: Georgia, 'Times New Roman', serif;
+    }
+    
+    .service-description p {
+        margin-bottom: 1rem;
+    }
+    
+    .service-description h1,
+    .service-description h2,
+    .service-description h3,
+    .service-description h4,
+    .service-description h5,
+    .service-description h6 {
+        color: var(--dark-green);
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .service-description ul,
+    .service-description ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .service-description li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .service-description a {
+        color: var(--green);
+        text-decoration: none;
+    }
+    
+    .service-description a:hover {
+        text-decoration: underline;
+    }
+    
+    .service-description code {
+        background: var(--cream);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .service-description blockquote {
+        border-left: 4px solid var(--light-brown);
+        padding-left: 1rem;
+        margin-left: 0;
+        color: var(--text-light);
+        font-style: italic;
     }
     
     .booking-form {
@@ -177,6 +234,31 @@
         border-top-color: white;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
+    }
+    
+    /* Make it match the btn-primary class from other templates */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--green), var(--dark-green));
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        margin-top: 10px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--dark-green), var(--green));
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
     }
     
     @keyframes spin {
@@ -362,7 +444,7 @@
         <h3 class="service-title">{{ service.title }}</h3>
         <div class="service-price">{{ service.price }}</div>
         <div class="service-description">
-            {{ service.description[:200] }}...
+            {{ service.rendered_content()|safe }}
         </div>
     </div>
     
@@ -428,7 +510,7 @@
             </div>
             
             <!-- Submit Button -->
-            <button type="submit" id="submit-button" class="btn-submit">
+            <button type="submit" id="submit-button" class="btn-submit btn-primary">
                 Submit Booking
             </button>
         </form>
