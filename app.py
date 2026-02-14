@@ -148,6 +148,7 @@ class Booking(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=True)  # Link to service
     created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Admin(db.Model):
@@ -465,7 +466,7 @@ def book_service(service_id):
         
         if name and email and phone:
             try:
-                booking = Booking(name=name, email=email, phone=phone)
+                booking = Booking(name=name, email=email, phone=phone, service_id=service.id)
                 db.session.add(booking)
                 db.session.commit()
                 flash(f'Thank you {name}, your booking for "{service.title}" has been received! We will contact you soon.', 'success')
