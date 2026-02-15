@@ -3,34 +3,441 @@
 {% block title %}{{ post.title }} - Euromove{% endblock %}
 
 {% block content %}
-<!-- CHANGED: Full width article layout -->
-<article style="max-width: none; margin: 0 auto; padding: 2rem;">
-    <!-- CHANGED: URL encoding for special characters -->
-    <a href="{{ url_for('posts') | safe }}" style="color: var(--green); text-decoration: none; font-weight: 500; margin-bottom: 2rem; display: inline-block;">
-        ← Back to all posts
-    </a>
+<article class="post-detail-container" style="
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: Georgia, 'Times New Roman', serif;
+">
+    <!-- Back Navigation -->
+    <nav class="post-back-nav" style="margin-bottom: 2rem;">
+        <a href="{{ url_for('posts') }}" class="back-link" style="
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s ease;
+        ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to all posts
+        </a>
+    </nav>
 
-    <h1 style="color: var(--dark-green); margin-bottom: 1rem; font-size: 2.5rem; text-align: center;">{{ post.title }}</h1>
-    
-    <div style="color: var(--text-light); margin-bottom: 2rem; text-align: center;">
-        <em>Posted on {{ post.date_posted.strftime('%B %d, %Y') if post.date_posted else 'Unknown date' }}</em>
+    <!-- Post Header -->
+    <header class="post-header" style="margin-bottom: 3rem; text-align: center;">
+        <h1 class="post-title" style="
+            color: var(--dark-green);
+            margin: 0 0 1rem 0;
+            font-size: 2.5rem;
+            line-height: 1.2;
+            font-weight: 700;
+        ">
+            {{ post.title }}
+        </h1>
+        
+        <div class="post-meta" style="
+            color: var(--text-light);
+            font-size: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        ">
+            <time datetime="{{ post.date_posted.isoformat() if post.date_posted else '' }}" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {{ post.date_posted.strftime('%B %d, %Y') if post.date_posted else 'Unknown date' }}
+            </time>
+            
+            {% if post.author %}
+            <span class="post-author" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                {{ post.author }}
+            </span>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Featured Image -->
+    {% if post.image_url and post.image_url != 'No image' %}
+    <div class="post-featured-image" style="
+        margin-bottom: 3rem;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    ">
+        <img 
+            src="{{ post.image_url }}" 
+            alt="{{ post.title }}"
+            style="
+                width: 100%;
+                height: auto;
+                max-height: 500px;
+                object-fit: cover;
+                display: block;
+                transition: transform 0.5s ease;
+            "
+            loading="lazy"
+            onload="this.style.opacity='1'"
+            onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\'padding: 3rem; background: var(--light-brown); border-radius: 16px; text-align: center;\\'><span style=\\'color: var(--text-light);\\'>Featured Image</span></div>'"
+        >
     </div>
-
-    {% if post.image_url %}
-    <!-- CHANGED: URL encoding for image paths with special characters -->
-    <img src="{{ post.image_url | urlencode }}" alt="{{ post.title }}" style="width: 100%; max-height: 500px; border-radius: 12px; margin-bottom: 2rem; object-fit: cover;">
     {% endif %}
 
-    <!-- CHANGED: Full width content -->
-    <div style="line-height: 1.8; color: var(--text-dark); font-size: 1.2rem; max-width: 100%;">
+    <!-- Post Content -->
+    <div class="post-content" style="
+        line-height: 1.8;
+        color: var(--text-dark);
+        font-size: 1.125rem;
+    ">
         {{ post.rendered_content()|safe }}
     </div>
 
-    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--light-brown); text-align: center;">
-        <!-- CHANGED: URL encoding for special characters -->
-        <a href="{{ url_for('posts') | safe }}" style="color: var(--green); text-decoration: none; font-weight: 500;">
-            ← Back to all posts
-        </a>
-    </div>
+    <!-- Post Footer -->
+    <footer class="post-footer" style="
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--light-brown);
+    ">
+        <div class="post-tags" style="margin-bottom: 1.5rem;">
+            {% if post.tags %}
+            <div style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            ">
+                {% for tag in post.tags.split(',') %}
+                <span class="post-tag" style="
+                    background: var(--cream);
+                    color: var(--dark-brown);
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                ">
+                    {{ tag.strip() }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="post-navigation" style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        ">
+            <a href="{{ url_for('posts') }}" class="back-to-posts" style="
+                color: var(--green);
+                text-decoration: none;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                transition: color 0.2s ease;
+            ">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to all posts
+            </a>
+            
+            <a href="{{ url_for('index') }}#book" class="book-consultation" style="
+                background: linear-gradient(135deg, var(--green), var(--dark-green));
+                color: white;
+                text-decoration: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            ">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Book Consultation
+            </a>
+        </div>
+    </footer>
 </article>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Post Content Styling */
+.post-content {
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.post-content p {
+    margin-bottom: 1.5rem;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+    color: var(--dark-green);
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.post-content h1 { font-size: 2rem; }
+.post-content h2 { font-size: 1.75rem; }
+.post-content h3 { font-size: 1.5rem; }
+.post-content h4 { font-size: 1.25rem; }
+.post-content h5 { font-size: 1.125rem; }
+.post-content h6 { font-size: 1rem; }
+
+.post-content ul,
+.post-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.post-content li {
+    margin-bottom: 0.5rem;
+}
+
+.post-content blockquote {
+    border-left: 4px solid var(--light-brown);
+    padding-left: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.post-content code {
+    background: var(--cream);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.post-content pre {
+    background: var(--cream);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+}
+
+.post-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.post-content a {
+    color: var(--green);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.post-content a:hover {
+    color: var(--dark-green);
+    border-bottom-color: var(--green);
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
+
+.post-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.post-content th,
+.post-content td {
+    padding: 0.75rem;
+    border: 1px solid var(--light-brown);
+    text-align: left;
+}
+
+.post-content th {
+    background: var(--cream);
+    font-weight: 600;
+}
+
+/* Hover Effects */
+.back-link:hover,
+.back-to-posts:hover {
+    color: var(--dark-green) !important;
+}
+
+.book-consultation:hover {
+    background: linear-gradient(135deg, var(--dark-green), var(--green)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+.post-featured-image:hover img {
+    transform: scale(1.02);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .post-title {
+        font-size: 2rem !important;
+    }
+    
+    .post-detail-container {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .post-content {
+        font-size: 1rem !important;
+    }
+    
+    .post-navigation {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .book-consultation {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .post-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .post-meta {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image loading enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    const featuredImage = document.querySelector('.post-featured-image img');
+    if (featuredImage) {
+        featuredImage.style.opacity = '0';
+        featuredImage.style.transition = 'opacity 0.3s ease';
+        
+        if (featuredImage.complete) {
+            featuredImage.style.opacity = '1';
+        }
+    }
+    
+    // Smooth scroll for anchor links within post content
+    document.querySelectorAll('.post-content a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Add copy button to code blocks
+    document.querySelectorAll('.post-content pre').forEach(pre => {
+        const button = document.createElement('button');
+        button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+        `;
+        button.style.cssText = `
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--light-brown);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        `;
+        button.addEventListener('mouseenter', () => {
+            button.style.background = 'white';
+            button.style.borderColor = 'var(--green)';
+        });
+        button.addEventListener('mouseleave', () => {
+            button.style.background = 'rgba(255, 255, 255, 0.9)';
+            button.style.borderColor = 'var(--light-brown)';
+        });
+        button.addEventListener('click', async () => {
+            const code = pre.querySelector('code').textContent;
+            try {
+                await navigator.clipboard.writeText(code);
+                const originalText = button.innerHTML;
+                button.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Copied!
+                `;
+                button.style.color = 'var(--green)';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.color = '';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+        
+        pre.style.position = 'relative';
+        pre.appendChild(button);
+    });
+});
+</script>
 {% endblock %}

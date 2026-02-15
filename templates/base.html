@@ -128,38 +128,46 @@
             }
         }
 
-        nav {
-            background-color: var(--dark-brown);
+        .desktop-nav {
+            background: linear-gradient(135deg, var(--dark-brown), var(--brown));
             color: white;
             display: flex;
             justify-content: center;
             padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
         }
 
-        nav a {
+        .desktop-nav a {
             color: white;
             text-decoration: none;
-            margin: 0 1.5rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
+            margin: 0 0.75rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        nav a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            text-decoration: none;
+        .desktop-nav a:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         /* Mobile navigation */
         @media (max-width: 768px) {
-            nav {
+            .desktop-nav {
                 flex-wrap: wrap;
                 padding: 0.5rem 0;
             }
             
-            nav a {
+            .desktop-nav a {
                 margin: 0.25rem 0.5rem;
                 padding: 0.4rem 0.8rem;
                 font-size: 0.9rem;
@@ -167,12 +175,12 @@
         }
 
         @media (max-width: 480px) {
-            nav {
+            .desktop-nav {
                 flex-direction: column;
                 align-items: center;
             }
             
-            nav a {
+            .desktop-nav a {
                 width: 90%;
                 text-align: center;
                 margin: 0.2rem 0;
@@ -245,6 +253,80 @@
         .skip-to-content:focus {
             top: 0;
         }
+        
+        /* Hamburger Menu Styles */
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block !important;
+            }
+            
+            .desktop-nav {
+                display: none !important;
+            }
+            
+            .mobile-nav-overlay.active {
+                display: block !important;
+                opacity: 1 !important;
+            }
+            
+            .mobile-nav-overlay.active .mobile-nav-content {
+                animation: slideIn 0.3s ease;
+            }
+            
+            .mobile-nav-link:hover {
+                background: var(--cream) !important;
+                color: var(--dark-green) !important;
+            }
+            
+            .mobile-nav-link:active {
+                transform: scale(0.98);
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-menu-toggle,
+            .mobile-nav-overlay {
+                display: none !important;
+            }
+            
+            .desktop-nav {
+                display: block !important;
+            }
+        }
+        
+        /* Hamburger Animation */
+        .mobile-menu-toggle.active .hamburger-icon span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        
+        .mobile-menu-toggle.active .hamburger-icon span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .mobile-menu-toggle.active .hamburger-icon span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        /* Desktop Navigation Hover Effects */
+        .desktop-nav a:hover {
+            background: var(--cream);
+            color: var(--dark-green);
+        }
+        
+        .desktop-nav a:active {
+            transform: scale(0.98);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -262,14 +344,324 @@
         </div>
     </header>
 
-    <nav>
+    <!-- Mobile Hamburger Menu -->
+    <div class="mobile-menu-toggle" style="
+        display: none;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1001;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        padding: 0.75rem;
+        cursor: pointer;
+    ">
+        <div class="hamburger-icon" style="
+            width: 24px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        ">
+            <span style="
+                display: block;
+                width: 100%;
+                height: 3px;
+                background: var(--dark-green);
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            "></span>
+            <span style="
+                display: block;
+                width: 100%;
+                height: 3px;
+                background: var(--dark-green);
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            "></span>
+            <span style="
+                display: block;
+                width: 100%;
+                height: 3px;
+                background: var(--dark-green);
+                border-radius: 2px;
+                transition: all 0.3s ease;
+            "></span>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    ">
+        <div class="mobile-nav-content" style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+        ">
+            <button class="close-mobile-nav" style="
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                color: var(--text-light);
+                cursor: pointer;
+                padding: 0.5rem;
+            ">
+                ×
+            </button>
+            
+            <h3 style="
+                color: var(--dark-green);
+                margin-bottom: 2rem;
+                font-size: 1.5rem;
+            ">
+                Navigation
+            </h3>
+            
+            <div class="mobile-nav-links" style="
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            ">
+                <a href="{{ url_for('index') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Home
+                </a>
+                <a href="{{ url_for('services') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                    </svg>
+                    Services
+                </a>
+                <a href="{{ url_for('workshops') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    Workshops
+                </a>
+                <a href="{{ url_for('posts') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    News & Posts
+                </a>
+                <a href="{{ url_for('gallery') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Gallery
+                </a>
+                <a href="{{ url_for('privacy') }}" class="mobile-nav-link" style="
+                    color: var(--dark-green);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Privacy Policy
+                </a>
+                {% if admin %}
+                <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-link" style="
+                    color: var(--brown);
+                    text-decoration: none;
+                    font-size: 1.1rem;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                ">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/>
+                    </svg>
+                    Admin Dashboard
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="mobile-contact-info" style="
+                margin-top: 2rem;
+                padding-top: 2rem;
+                border-top: 1px solid var(--light-brown);
+            ">
+                {% if admin %}
+                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>Contact:</strong>
+                </p>
+                <a href="mailto:{{ admin.email_address }}" style="
+                    color: var(--green);
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                    display: block;
+                    margin-bottom: 0.5rem;
+                ">
+                    {{ admin.email_address }}
+                </a>
+                <a href="https://wa.me/{{ admin.whatsapp_number }}" style="
+                    color: var(--green);
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                    display: block;
+                ">
+                    WhatsApp: {{ admin.whatsapp_number }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
         <div class="container">
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('services') }}">Services</a>
-            <a href="{{ url_for('workshops') }}">Workshops</a>
-            <a href="{{ url_for('posts') }}">News & Posts</a>
-            <a href="{{ url_for('gallery') }}">Gallery</a>
-            <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+            <a href="{{ url_for('index') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                Home
+            </a>
+            <a href="{{ url_for('services') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+                Services
+            </a>
+            <a href="{{ url_for('workshops') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                Workshops
+            </a>
+            <a href="{{ url_for('posts') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                News & Posts
+            </a>
+            <a href="{{ url_for('gallery') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Gallery
+            </a>
+            <a href="{{ url_for('privacy') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Privacy Policy
+            </a>
+            {% if admin %}
+            <a href="{{ url_for('admin_dashboard') }}" style="color: var(--brown);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2zm10-10V7a4 4 0 0 0-8 0v4h8z"/>
+                </svg>
+                Admin
+            </a>
+            {% endif %}
         </div>
     </nav>
 
@@ -313,7 +705,88 @@
                     }
                 });
             }
+            
+            // Hamburger Menu Functionality
+            const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+            const mobileNavOverlay = document.querySelector('.mobile-nav-overlay');
+            const closeMobileNav = document.querySelector('.close-mobile-nav');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            
+            if (mobileMenuToggle && mobileNavOverlay) {
+                // Toggle mobile menu
+                mobileMenuToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    mobileNavOverlay.classList.toggle('active');
+                    document.body.style.overflow = mobileNavOverlay.classList.contains('active') ? 'hidden' : '';
+                });
+                
+                // Close mobile menu
+                if (closeMobileNav) {
+                    closeMobileNav.addEventListener('click', function() {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileNavOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                }
+                
+                // Close menu when clicking on links
+                mobileNavLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileNavOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                });
+                
+                // Close menu when clicking outside
+                mobileNavOverlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        mobileMenuToggle.classList.remove('active');
+                        this.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Close menu with Escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && mobileNavOverlay.classList.contains('active')) {
+                        mobileMenuToggle.classList.remove('active');
+                        mobileNavOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+            
+            // Add active class to current page in desktop navigation
+            const currentPath = window.location.pathname;
+            const desktopNavLinks = document.querySelectorAll('.desktop-nav a');
+            
+            desktopNavLinks.forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                if (linkPath === currentPath || 
+                    (currentPath.startsWith('/posts/') && linkPath === '/posts') ||
+                    (currentPath.startsWith('/book/service/') && linkPath === '/services') ||
+                    (currentPath.startsWith('/admin/') && linkPath === '/admin/dashboard')) {
+                    link.style.fontWeight = '600';
+                    link.style.color = 'var(--dark-green)';
+                    link.style.borderBottom = '2px solid var(--green)';
+                }
+            });
+            
+            // Add active class to current page in mobile navigation
+            mobileNavLinks.forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                if (linkPath === currentPath || 
+                    (currentPath.startsWith('/posts/') && linkPath === '/posts') ||
+                    (currentPath.startsWith('/book/service/') && linkPath === '/services') ||
+                    (currentPath.startsWith('/admin/') && linkPath === '/admin/dashboard')) {
+                    link.style.fontWeight = '600';
+                    link.style.color = 'var(--dark-green)';
+                    link.style.background = 'var(--cream)';
+                }
+            });
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
