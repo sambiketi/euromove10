@@ -2,19 +2,19 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero" style="text-align: center; padding: 3rem 1rem; background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%); border-radius: 15px; margin: 2rem 0;">
+<section class="hero" style="text-align: center; padding: 2rem 1rem; background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%); border-radius: 15px; margin: 1.5rem 0;">
     {% if hero_heading %}
-    <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 1rem;">{{ hero_heading }}</h2>
+    <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 0.75rem; font-weight: 700;">{{ hero_heading }}</h2>
     {% endif %}
 </section>
 
 <!-- Services Section -->
-<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Our Services</h3>
+<section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">Our Services</h3>
     <div class="services-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for service in services %}
         <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
-            <h4 style="color: var(--dark-green); margin-top: 0;">{{ service.title }}</h4>
+            <h4 style="color: var(--dark-green); margin-top: 0; font-weight: 600; word-wrap: break-word;">{{ service.title }}</h4>
 
             <!-- Price hidden -->
             <div style="color: var(--green); font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem; display:none;">
@@ -22,7 +22,7 @@
             </div>
 
             <!-- Service content with same Read More logic as posts/workshops -->
-            <div class="service-content" style="color: var(--text-dark); line-height: 1.6;">
+            <div class="service-content" style="color: var(--text-dark); line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">
                 <div class="excerpt">{{ service.rendered_content()[:180]|safe }}...</div>
                 <div class="full-content" style="display:none;">{{ service.rendered_content()|safe }}</div>
                 <button class="read-more-btn">Read More</button>
@@ -38,21 +38,23 @@
         <p style="text-align: center; color: var(--text-light); grid-column: 1 / -1;">No services available at the moment.</p>
         {% endfor %}
     </div>
-    <div style="text-align: center; margin-top: 1.5rem;">
-        <a href="{{ url_for('services') }}" class="btn btn-primary" style="display: inline-block;">View All Services</a>
+    <!-- Services Pagination/Pages Display -->
+    <div style="text-align: center; margin-top: 1.5rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+        <span style="color: var(--text-light); font-size: 0.9rem;">Showing {{ services|length }} services</span>
+        <a href="{{ url_for('services') }}" class="btn btn-primary" style="display: inline-block; padding: 0.5rem 1rem;">View All Services</a>
     </div>
 </section>
 
 <!-- Latest Post Section -->
-<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Latest Update</h3>
+<section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">Latest Update</h3>
     {% if latest_post %}
     <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 2rem; margin: 1.5rem 0;">
         {% if latest_post.image_url %}
         <img src="{{ latest_post.image_url }}" alt="{{ latest_post.title }}" style="width: 80%; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
         {% endif %}
-        <h4 style="color: var(--dark-green); margin-top: 1rem; font-size: 1.5rem;">{{ latest_post.title }}</h4>
-        <div class="post-content" style="color: var(--text-dark); line-height: 1.6;">
+        <h4 style="color: var(--dark-green); margin-top: 1rem; font-size: 1.5rem; font-weight: 600; word-wrap: break-word;">{{ latest_post.title }}</h4>
+        <div class="post-content" style="color: var(--text-dark); line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">
             <div class="excerpt">{{ latest_post.rendered_content()[:250]|safe }}...</div>
             <div class="full-content" style="display:none;">{{ latest_post.rendered_content()|safe }}</div>
             <button class="read-more-btn">Read More</button>
@@ -68,8 +70,8 @@
 
 <!-- Horizontal Scrolling Gallery -->
 {% if gallery %}
-<section style="margin: 3rem 0;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Gallery</h3>
+<section style="margin: 2rem 0;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">Gallery</h3>
     <div class="horizontal-gallery" id="horizontal-gallery">
         {% for item in gallery %}
         <div class="gallery-card">
@@ -82,16 +84,16 @@
 {% endif %}
 
 <!-- Upcoming Workshops -->
-<section style="margin: 3rem 0; font-family: Georgia, 'Times New Roman', serif;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Upcoming Workshops</h3>
+<section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">Upcoming Workshops</h3>
     <div class="workshops-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
         {% for workshop in upcoming_workshops %}
         <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 1.5rem; transition: transform 0.3s ease;">
-            <h4 style="color: var(--dark-green); margin-top: 0;">{{ workshop.title }}</h4>
+            <h4 style="color: var(--dark-green); margin-top: 0; font-weight: 600; word-wrap: break-word;">{{ workshop.title }}</h4>
             {% if workshop.image_url %}
             <img src="{{ workshop.image_url }}" alt="{{ workshop.title }}" style="width: 80%; margin: 0 auto; display: block; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: auto; object-fit: cover;">
             {% endif %}
-            <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6;">
+            <div class="workshop-content" style="color: var(--text-dark); line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word;">
                 <div class="excerpt">{{ workshop.rendered_content()[:250]|safe }}...</div>
                 <div class="full-content" style="display:none;">{{ workshop.rendered_content()|safe }}</div>
                 <button class="read-more-btn">Read More</button>
@@ -104,11 +106,16 @@
         <p style="text-align: center; color: var(--text-light); grid-column: 1 / -1;">No upcoming workshops. Check back soon!</p>
         {% endfor %}
     </div>
+    <!-- Workshops Pagination/Pages Display -->
+    <div style="text-align: center; margin-top: 1.5rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+        <span style="color: var(--text-light); font-size: 0.9rem;">Showing {{ upcoming_workshops|length }} workshops</span>
+        <a href="{{ url_for('workshops') }}" class="btn btn-primary" style="display: inline-block; padding: 0.5rem 1rem;">View All Workshops</a>
+    </div>
 </section>
 
 <!-- Booking Section -->
-<section id="book" style="margin: 3rem 0;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px;">Book a Consultation</h3>
+<section id="book" style="margin: 2rem 0;">
+    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">Book a Consultation</h3>
     <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); max-width: 500px; margin: 0 auto;">
         <form method="POST" action="{{ url_for('book') }}">
             <div style="margin-bottom: 1rem;">
@@ -126,8 +133,8 @@
 </section>
 
 <!-- Contact Info -->
-<section style="margin: 3rem 0; text-align: center;">
-    <h3 style="color: var(--dark-green); margin-bottom: 1rem;">Get In Touch</h3>
+<section style="margin: 2rem 0; text-align: center;">
+    <h3 style="color: var(--dark-green); margin-bottom: 1rem; font-weight: 600;">Get In Touch</h3>
     {% if admin %}
     <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
         <a href="https://wa.me/{{ admin.whatsapp_number }}" class="btn btn-primary" target="_blank" style="background: linear-gradient(135deg, #25D366, #128C7E);">
@@ -149,6 +156,21 @@
 /* Fonts */
 body {
     font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Ensure text wrapping for all content */
+.service-content,
+.post-content,
+.workshop-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Ensure card titles wrap properly */
+.card h4 {
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Mobile Responsive Adjustments */
