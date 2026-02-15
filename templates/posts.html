@@ -88,19 +88,71 @@
                         {{ post.title }}
                     </h2>
                     
-                    <!-- Excerpt -->
-                    <div class="post-excerpt" style="
-                        color: var(--text-dark);
-                        line-height: 1.5;
-                        font-size: 0.95rem;
-                        margin-bottom: 1rem;
+                    <!-- Excerpt with Read More -->
+                    <div class="post-content-wrapper" style="
                         flex-grow: 1;
-                        display: -webkit-box;
-                        -webkit-line-clamp: 3;
-                        -webkit-box-orient: vertical;
-                        overflow: hidden;
+                        margin-bottom: 1rem;
                     ">
-                        {{ post.rendered_content()[:120]|striptags|safe }}...
+                        <div class="post-excerpt" style="
+                            color: var(--text-dark);
+                            line-height: 1.5;
+                            font-size: 0.95rem;
+                            display: -webkit-box;
+                            -webkit-line-clamp: 3;
+                            -webkit-box-orient: vertical;
+                            overflow: hidden;
+                        ">
+                            {{ post.rendered_content()[:120]|striptags|safe }}...
+                        </div>
+                        
+                        <div class="post-full-content" style="
+                            color: var(--text-dark);
+                            line-height: 1.5;
+                            font-size: 0.95rem;
+                            display: none;
+                        ">
+                            {{ post.rendered_content()|striptags|safe }}
+                        </div>
+                        
+                        <button class="read-more-btn" style="
+                            margin-top: 0.75rem;
+                            background: transparent;
+                            color: var(--green);
+                            border: none;
+                            padding: 4px 0;
+                            font-size: 0.9rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 4px;
+                            transition: color 0.2s ease;
+                        ">
+                            Read More
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        
+                        <button class="read-less-btn" style="
+                            margin-top: 0.75rem;
+                            background: transparent;
+                            color: var(--green);
+                            border: none;
+                            padding: 4px 0;
+                            font-size: 0.9rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: none;
+                            align-items: center;
+                            gap: 4px;
+                            transition: color 0.2s ease;
+                        ">
+                            Read Less
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
                     </div>
                     
                     <!-- Metadata -->
@@ -108,27 +160,10 @@
                         margin-top: auto;
                         padding-top: 1rem;
                         border-top: 1px solid var(--light-brown);
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
                     ">
                         <small style="color: var(--text-light); font-size: 0.85rem;">
                             <em>{{ post.date_posted.strftime('%b %d, %Y') if post.date_posted else 'Unknown date' }}</em>
                         </small>
-                        
-                        <span style="
-                            color: var(--green);
-                            font-size: 0.85rem;
-                            font-weight: 600;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 4px;
-                        ">
-                            Read More
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 12h14M12 5l7 7-7 7"/>
-                            </svg>
-                        </span>
                     </div>
                 </div>
             </div>
@@ -215,11 +250,24 @@ body {
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* Read More button hover effects */
+.read-more-btn:hover,
+.read-less-btn:hover {
+    color: var(--dark-green) !important;
+}
+
 /* Accessibility focus styles */
 .post-card-link:focus {
     outline: 2px solid var(--green);
     outline-offset: 4px;
     border-radius: 12px;
+}
+
+.read-more-btn:focus,
+.read-less-btn:focus {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
 /* Loading state for images */
@@ -283,10 +331,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Read More / Read Less functionality
+    document.querySelectorAll('.read-more-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const wrapper = this.closest('.post-content-wrapper');
+            const excerpt = wrapper.querySelector('.post-excerpt');
+            const fullContent = wrapper.querySelector('.post-full-content');
+            const readLessBtn = wrapper.querySelector('.read-less-btn');
+            
+            // Hide excerpt, show full content
+            excerpt.style.display = 'none';
+            fullContent.style.display = 'block';
+            this.style.display = 'none';
+            readLessBtn.style.display = 'inline-flex';
+            
+            // Expand the card height slightly
+            const card = wrapper.closest('.post-card');
+            card.style.height = 'auto';
+        });
+    });
+    
+    document.querySelectorAll('.read-less-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const wrapper = this.closest('.post-content-wrapper');
+            const excerpt = wrapper.querySelector('.post-excerpt');
+            const fullContent = wrapper.querySelector('.post-full-content');
+            const readMoreBtn = wrapper.querySelector('.read-more-btn');
+            
+            // Show excerpt, hide full content
+            excerpt.style.display = '-webkit-box';
+            fullContent.style.display = 'none';
+            this.style.display = 'none';
+            readMoreBtn.style.display = 'inline-flex';
+            
+            // Reset card height
+            const card = wrapper.closest('.post-card');
+            card.style.height = '';
+        });
+    });
+    
+    // Prevent card click when clicking Read More/Less buttons
+    document.querySelectorAll('.read-more-btn, .read-less-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
     // Add click tracking for analytics (optional)
     const postLinks = document.querySelectorAll('.post-card-link');
     postLinks.forEach(link => {
         link.addEventListener('click', function(e) {
+            // Don't navigate if clicking on Read More/Less buttons
+            if (e.target.closest('.read-more-btn') || e.target.closest('.read-less-btn')) {
+                e.preventDefault();
+                return;
+            }
             // You could add analytics tracking here
             // console.log('Post clicked:', this.href);
         });
