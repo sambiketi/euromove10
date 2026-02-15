@@ -9,13 +9,15 @@ import time
 import re
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
+import hashlib
+import secrets
 
 # --- Load environment variables ---
 load_dotenv()
 
 # --- Initialize Flask app ---
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
 
 # Site configuration
 SITE_URL = "https://euromove.co.ke"  # Your site URL
@@ -213,9 +215,28 @@ class Booking(db.Model):
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(50))
+    password_hash = db.Column(db.String(128))  # Store hash, not plain password
     whatsapp_number = db.Column(db.String(20), default="+1234567890")
     email_address = db.Column(db.String(100), default="admin@example.com")
+    
+    @staticmethod
+    def hash_password(password):
+        """Hash a password for storing."""
+        salt = secrets.token_hex(16)
+        return salt + ":" + hashlib.sha256((salt + password).encode()).hexdigest()
+    
+    @staticmethod
+    def verify_password(stored_password, provided_password):
+        """Verify a stored password against one provided by user."""
+        if ":" not in stored_password:
+            # Legacy plain text password (for migration)
+            return stored_password == provided_password
+        salt, hash_value = stored_password.split(":")
+        return hash_value == hashlib.sha256((salt + provided_password).encode()).hexdigest()
+    
+    def set_password(self, password):
+        """Set password hash."""
+        self.password_hash = self.hash_password(password)
 
 class SiteSettings(db.Model):
     __tablename__ = 'site_settings'
@@ -267,10 +288,10 @@ with app.app_context():
             if not Admin.query.filter_by(username="admin").first():
                 admin = Admin(
                     username="admin", 
-                    password="password",
                     whatsapp_number="+1234567890",
                     email_address="admin@example.com"
                 )
+                admin.set_password("password")  # Change this in production!
                 db.session.add(admin)
                 db.session.commit()
                 print("✅ Database and default admin created successfully")
@@ -707,8 +728,8 @@ def admin_login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
-        admin = Admin.query.filter_by(username=username, password=password).first()
-        if admin:
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and Admin.verify_password(admin.password_hash, password):
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:
