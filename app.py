@@ -284,7 +284,7 @@ with app.app_context():
 @app.context_processor
 def inject_site_settings():
     setting = SiteSettings.query.first()
-    return dict(site_settings=setting)
+    return dict(site_settings=setting, create_slug=create_slug, datetime=datetime, SITE_URL=SITE_URL)
 
 
 # --- ROBOTS.TXT ROUTE ---
