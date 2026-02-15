@@ -8,7 +8,7 @@
     
     <div class="posts-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; margin-top: 1rem;">
         {% for post in posts %}
-        <a href="{{ url_for('post_detail', slug=post.title.lower().replace(' ', '-').replace(':', '').replace('?', '').replace('&', 'and')) }}" 
+        <a href="{{ url_for('post_detail', slug=create_slug(post.title)) }}" 
            class="post-card-link" 
            style="text-decoration: none; color: inherit; display: block;">
             
