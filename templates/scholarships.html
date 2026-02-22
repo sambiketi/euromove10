@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Scholarships - Euromove{% endblock %}
+
+{% block content %}
+<section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+    <h1 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; margin-bottom: 2rem;">Scholarships</h1>
+    
+    <div class="scholarships-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; margin-top: 1rem;">
+        {% for scholarship in scholarships %}
+        <a href="{{ url_for('scholarship_detail', scholarship_id=scholarship.id) }}" 
+           class="scholarship-card-link" 
+           style="text-decoration: none; color: inherit; display: block;">
+            
+            <div class="scholarship-card" style="
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);
+                overflow: hidden;
+                transition: all 0.3s ease;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                border: 2px solid var(--green);
+            ">
+                
+                <!-- Scholarship Header -->
+                <div class="scholarship-header" style="
+                    background: linear-gradient(135deg, var(--green), var(--dark-green));
+                    padding: 1.5rem;
+                    color: white;
+                ">
+                    <h3 style="
+                        margin: 0;
+                        font-size: 1.3rem;
+                        font-weight: 600;
+                        line-height: 1.4;
+                    ">
+                        {{ scholarship.title }}
+                    </h3>
+                </div>
+                
+                <!-- Scholarship Content -->
+                <div class="scholarship-content" style="
+                    padding: 1.5rem;
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                ">
+                    <div class="scholarship-excerpt" style="
+                        color: var(--text-dark);
+                        line-height: 1.6;
+                        margin-bottom: 1rem;
+                        flex-grow: 1;
+                        overflow: hidden;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 4;
+                        -webkit-box-orient: vertical;
+                    ">
+                        {% if scholarship.content_format == 'markdown' %}
+                            {{ scholarship.content|truncate(200) }}
+                        {% else %}
+                            {{ scholarship.content|striptags|truncate(200) }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="scholarship-meta" style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: auto;
+                        padding-top: 1rem;
+                        border-top: 1px solid var(--light-brown);
+                    ">
+                        <span class="date" style="
+                            color: var(--text-light);
+                            font-size: 0.9rem;
+                        ">
+                            {{ datetime.strftime(scholarship.date_posted, '%B %d, %Y') }}
+                        </span>
+                        
+                        <span class="read-more" style="
+                            color: var(--green);
+                            font-weight: 600;
+                            font-size: 0.9rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        ">
+                            Read More
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14"/>
+                                <path d="M12 5l7 7-7 7"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+        
+        <!-- Hover effect -->
+        <style>
+            .scholarship-card-link:hover .scholarship-card {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(141, 110, 99, 0.2);
+            }
+            
+            .scholarship-card-link:hover .read-more {
+                color: var(--dark-green);
+            }
+        </style>
+        {% endfor %}
+    </div>
+    
+    {% if not scholarships %}
+    <div class="no-scholarships" style="
+        text-align: center;
+        padding: 3rem;
+        background: var(--cream);
+        border-radius: 12px;
+        margin: 2rem 0;
+    ">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="1" style="margin-bottom: 1rem;">
+            <path d="M12 14l9-5-9-5-9 5 9 5z"/>
+            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+            <path d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+        </svg>
+        <h3 style="color: var(--text-light); margin-bottom: 0.5rem;">No Scholarships Available</h3>
+        <p style="color: var(--text-light); margin: 0;">Check back later for scholarship opportunities.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

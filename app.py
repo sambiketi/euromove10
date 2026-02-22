@@ -143,6 +143,30 @@ class Post(db.Model):
         }
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
+
+class Scholarship(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    content = db.Column(db.Text)
+    content_format = db.Column(db.String(10), default='html', nullable=False)
+    date_posted = db.Column(db.DateTime, default=datetime.now)
+    
+    def rendered_content(self):
+        if self.content_format == 'markdown':
+            html = markdown.markdown(self.content, extensions=['extra', 'fenced_code'])
+            return self.sanitize_html(html)
+        return self.sanitize_html(self.content)
+    
+    def sanitize_html(self, html_content):
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'b', 'i', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+                       'ul', 'ol', 'li', 'a', 'blockquote', 'code', 'pre', 'span', 'div']
+        allowed_attrs = {
+            'a': ['href', 'title', 'target'],
+            'div': ['class'],
+            'span': ['class']
+        }
+        return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
+
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -506,6 +530,21 @@ def posts():
     return render_template('posts.html', posts=all_posts, datetime=datetime, SITE_URL=SITE_URL)
 
 
+# All scholarships listing
+@app.route('/scholarships')
+def scholarships():
+    all_scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
+    return render_template('scholarships.html', scholarships=all_scholarships, datetime=datetime, SITE_URL=SITE_URL)
+
+
+# Single scholarship detail
+@app.route('/scholarships/<int:scholarship_id>')
+def scholarship_detail(scholarship_id):
+    scholarship = Scholarship.query.get_or_404(scholarship_id)
+    admin = Admin.query.first()
+    return render_template('scholarship_detail.html', scholarship=scholarship, admin=admin, datetime=datetime, SITE_URL=SITE_URL)
+
+
 # Services page
 @app.route('/services')
 def services():
@@ -780,6 +819,28 @@ def admin_dashboard():
                     db.session.rollback()
                     flash(f"Error adding workshop: {e}", "danger")
 
+        # Add Scholarship
+        elif 'scholarship_title' in request.form:
+            title = request.form.get('scholarship_title', '').strip()
+            content = request.form.get('scholarship_content', '').strip()
+            content_format = request.form.get('scholarship_format', 'html')
+
+            if not title or not content:
+                flash("Scholarship title and content are required", "danger")
+            else:
+                try:
+                    scholarship = Scholarship(
+                        title=title, 
+                        content=content, 
+                        content_format=content_format
+                    )
+                    db.session.add(scholarship)
+                    db.session.commit()
+                    flash("Scholarship added successfully", "success")
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error adding scholarship: {e}", "danger")
+
         # Add Service
         elif 'service_title' in request.form:
             title = request.form.get('service_title', '').strip()
@@ -848,12 +909,14 @@ def admin_dashboard():
 
     # Fetch all data for dashboard
     posts = Post.query.order_by(Post.date_posted.desc()).all()
+    scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
     workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
     services = Service.query.order_by(Service.created_at.desc()).all()
     bookings = Booking.query.order_by(Booking.created_at.desc()).all()
     site_settings = SiteSettings.query.first()
     return render_template('admin_dashboard.html', 
                          posts=posts, 
+                         scholarships=scholarships,
                          workshops=workshops, 
                          services=services,
                          bookings=bookings,
@@ -930,6 +993,88 @@ def toggle_service(service_id):
     
     return redirect(url_for('admin_dashboard'))
 
+
+# Edit Scholarship (simple inline form)
+@app.route('/admin/scholarship/edit/<int:scholarship_id>', methods=['GET', 'POST'])
+def edit_scholarship(scholarship_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    scholarship = Scholarship.query.get_or_404(scholarship_id)
+    
+    if request.method == 'POST':
+        scholarship.title = request.form.get('title', '').strip()
+        scholarship.content = request.form.get('content', '').strip()
+        scholarship.content_format = request.form.get('content_format', 'html')
+        
+        if not scholarship.title or not scholarship.content:
+            flash("Scholarship title and content are required", "danger")
+        else:
+            try:
+                db.session.commit()
+                flash("Scholarship updated successfully", "success")
+                return redirect(url_for('admin_dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error updating scholarship: {e}", "danger")
+    
+    # Simple inline edit form (no separate template)
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Edit Scholarship - EuroMove Admin</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 20px; }}
+            .form-group {{ margin-bottom: 15px; }}
+            label {{ display: block; margin-bottom: 5px; font-weight: bold; }}
+            input, textarea, select {{ width: 100%; padding: 8px; }}
+            textarea {{ height: 200px; }}
+            .btn {{ padding: 10px 20px; margin-right: 10px; }}
+        </style>
+    </head>
+    <body>
+        <h2>Edit Scholarship</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label>Title:</label>
+                <input type="text" name="title" value="{scholarship.title}" required>
+            </div>
+            <div class="form-group">
+                <label>Content Format:</label>
+                <select name="content_format">
+                    <option value="html" {"selected" if scholarship.content_format == "html" else ""}>HTML</option>
+                    <option value="markdown" {"selected" if scholarship.content_format == "markdown" else ""}>Markdown</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Content:</label>
+                <textarea name="content" required>{scholarship.content}</textarea>
+            </div>
+            <button type="submit" class="btn">Update</button>
+            <a href="/admin/dashboard" class="btn">Cancel</a>
+        </form>
+    </body>
+    </html>
+    '''
+
+# Delete Scholarship
+@app.route('/admin/scholarship/delete/<int:scholarship_id>', methods=['POST'])
+def delete_scholarship(scholarship_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    scholarship = Scholarship.query.get_or_404(scholarship_id)
+    
+    try:
+        db.session.delete(scholarship)
+        db.session.commit()
+        flash(f'Scholarship "{scholarship.title}" deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting scholarship: {e}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
 
 
 # --- LOGOUT ---
