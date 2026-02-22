@@ -101,6 +101,11 @@ class Workshop(db.Model):
     image_url = db.Column(db.String(300))
     date_posted = db.Column(db.DateTime, default=datetime.now)
     
+    # SEO fields
+    slug = db.Column(db.String(200), unique=True, nullable=True)
+    meta_description = db.Column(db.String(300), nullable=True)
+    keywords = db.Column(db.String(500), nullable=True)
+    
     def rendered_content(self):
         if self.content_format == 'markdown':
             html = markdown.markdown(self.description, extensions=['extra', 'fenced_code'])
@@ -126,6 +131,11 @@ class Post(db.Model):
     image_url = db.Column(db.String(300))
     date_posted = db.Column(db.DateTime, default=datetime.now)
     
+    # SEO fields
+    slug = db.Column(db.String(200), unique=True, nullable=True)
+    meta_description = db.Column(db.String(300), nullable=True)
+    keywords = db.Column(db.String(500), nullable=True)
+    
     def rendered_content(self):
         if self.content_format == 'markdown':
             html = markdown.markdown(self.content, extensions=['extra', 'fenced_code'])
@@ -150,6 +160,11 @@ class Scholarship(db.Model):
     content = db.Column(db.Text)
     content_format = db.Column(db.String(10), default='html', nullable=False)
     date_posted = db.Column(db.DateTime, default=datetime.now)
+    
+    # SEO fields
+    slug = db.Column(db.String(200), unique=True, nullable=True)
+    meta_description = db.Column(db.String(300), nullable=True)
+    keywords = db.Column(db.String(500), nullable=True)
     
     def rendered_content(self):
         if self.content_format == 'markdown':
@@ -777,6 +792,9 @@ def admin_dashboard():
             content = request.form.get('post_content', '').strip()
             content_format = request.form.get('post_format', 'html')
             image_url = request.form.get('post_image', '').strip() or None
+            slug = request.form.get('post_slug', '').strip() or None
+            meta_description = request.form.get('post_meta_description', '').strip() or None
+            keywords = request.form.get('post_keywords', '').strip() or None
 
             if not title or not content:
                 flash("Post title and content are required", "danger")
@@ -786,7 +804,10 @@ def admin_dashboard():
                         title=title, 
                         content=content, 
                         content_format=content_format,
-                        image_url=image_url
+                        image_url=image_url,
+                        slug=slug,
+                        meta_description=meta_description,
+                        keywords=keywords
                     )
                     db.session.add(post)
                     db.session.commit()
@@ -801,6 +822,9 @@ def admin_dashboard():
             description = request.form.get('workshop_content', '').strip()
             content_format = request.form.get('workshop_format', 'html')
             image_url = request.form.get('workshop_image', '').strip() or None
+            slug = request.form.get('workshop_slug', '').strip() or None
+            meta_description = request.form.get('workshop_meta_description', '').strip() or None
+            keywords = request.form.get('workshop_keywords', '').strip() or None
 
             if not title or not description:
                 flash("Workshop title and description are required", "danger")
@@ -810,7 +834,10 @@ def admin_dashboard():
                         title=title, 
                         description=description,
                         content_format=content_format,
-                        image_url=image_url
+                        image_url=image_url,
+                        slug=slug,
+                        meta_description=meta_description,
+                        keywords=keywords
                     )
                     db.session.add(ws)
                     db.session.commit()
@@ -824,6 +851,9 @@ def admin_dashboard():
             title = request.form.get('scholarship_title', '').strip()
             content = request.form.get('scholarship_content', '').strip()
             content_format = request.form.get('scholarship_format', 'html')
+            slug = request.form.get('scholarship_slug', '').strip() or None
+            meta_description = request.form.get('scholarship_meta_description', '').strip() or None
+            keywords = request.form.get('scholarship_keywords', '').strip() or None
 
             if not title or not content:
                 flash("Scholarship title and content are required", "danger")
@@ -832,7 +862,10 @@ def admin_dashboard():
                     scholarship = Scholarship(
                         title=title, 
                         content=content, 
-                        content_format=content_format
+                        content_format=content_format,
+                        slug=slug,
+                        meta_description=meta_description,
+                        keywords=keywords
                     )
                     db.session.add(scholarship)
                     db.session.commit()
@@ -1006,6 +1039,9 @@ def edit_scholarship(scholarship_id):
         scholarship.title = request.form.get('title', '').strip()
         scholarship.content = request.form.get('content', '').strip()
         scholarship.content_format = request.form.get('content_format', 'html')
+        scholarship.slug = request.form.get('slug', '').strip() or None
+        scholarship.meta_description = request.form.get('meta_description', '').strip() or None
+        scholarship.keywords = request.form.get('keywords', '').strip() or None
         
         if not scholarship.title or not scholarship.content:
             flash("Scholarship title and content are required", "danger")
@@ -1050,6 +1086,20 @@ def edit_scholarship(scholarship_id):
             <div class="form-group">
                 <label>Content:</label>
                 <textarea name="content" required>{scholarship.content}</textarea>
+            </div>
+            <div class="form-group">
+                <label>URL Slug (optional):</label>
+                <input type="text" name="slug" value="{scholarship.slug or ''}" placeholder="my-scholarship-title">
+                <small>Leave empty to auto-generate from title</small>
+            </div>
+            <div class="form-group">
+                <label>Meta Description (optional):</label>
+                <textarea name="meta_description" rows="2" placeholder="Brief description for search engines">{scholarship.meta_description or ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Keywords (optional):</label>
+                <input type="text" name="keywords" value="{scholarship.keywords or ''}" placeholder="scholarship, funding, europe, study">
+                <small>Comma-separated keywords for SEO</small>
             </div>
             <button type="submit" class="btn">Update</button>
             <a href="/admin/dashboard" class="btn">Cancel</a>

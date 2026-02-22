@@ -2,6 +2,16 @@
 
 {% block title %}{{ scholarship.title }} - Euromove Scholarships{% endblock %}
 
+{% block head %}
+{{ super() }}
+{% if scholarship.meta_description %}
+<meta name="description" content="{{ scholarship.meta_description }}">
+{% endif %}
+{% if scholarship.keywords %}
+<meta name="keywords" content="{{ scholarship.keywords }}">
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <article class="scholarship-detail-container" style="
     max-width: 800px;

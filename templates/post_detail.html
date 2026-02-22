@@ -2,6 +2,16 @@
 
 {% block title %}{{ post.title }} - Euromove{% endblock %}
 
+{% block head %}
+{{ super() }}
+{% if post.meta_description %}
+<meta name="description" content="{{ post.meta_description }}">
+{% endif %}
+{% if post.keywords %}
+<meta name="keywords" content="{{ post.keywords }}">
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <article class="post-detail-container" style="
     max-width: 800px;
