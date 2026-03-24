@@ -545,6 +545,8 @@ def index():
     services = Service.query.filter_by(is_active=True).order_by(Service.created_at.asc()).limit(3).all()
     # Get admin contact info
     admin = Admin.query.first()
+      # Get expert guidance videos
+    expert_guidance_videos = ExpertGuidance.query.filter_by(is_active=True).order_by(ExpertGuidance.created_at.desc()).all()
     # Add this line with the other queries
     expert_guidance_videos = ExpertGuidance.query.order_by(ExpertGuidance.created_at.desc()).all()
     # Fetch gallery images
@@ -566,6 +568,7 @@ def index():
                          services=services,
                          admin=admin,
                          gallery=gallery,
+                         expert_guidance_videos=expert_guidance_videos,
                          datetime=datetime,
                          SITE_URL=SITE_URL)
 
