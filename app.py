@@ -593,6 +593,11 @@ def post_detail(slug):
     from flask import abort
     abort(404)
 
+# --- PING ENDPOINT FOR UPTIME MONITORING ---
+@app.route('/ping')
+def ping():
+    """Simple health check endpoint to keep app awake"""
+    return "OK", 200
 
 # All posts listing
 @app.route('/posts')
