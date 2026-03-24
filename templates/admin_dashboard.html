@@ -116,6 +116,10 @@
             background: linear-gradient(135deg, #388e3c, #2e7d32);
             color: white;
         }
+        .btn-warning {
+            background: linear-gradient(135deg, #f57c00, #ef6c00);
+            color: white;
+        }
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -149,6 +153,7 @@
             background: white;
             border-radius: 10px 10px 0 0;
             padding: 0 10px;
+            flex-wrap: wrap;
             box-shadow: 0 2px 8px rgba(141, 110, 99, 0.1);
         }
         .nav-tab {
@@ -220,6 +225,45 @@
             border-radius: 4px;
             border: 1px solid var(--light-brown);
         }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-active {
+            background: #e8f5e8;
+            color: var(--dark-green);
+        }
+        .status-inactive {
+            background: #f5f5f5;
+            color: #757575;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+            .table {
+                font-size: 0.85rem;
+            }
+            .table th, .table td {
+                padding: 10px;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -246,6 +290,7 @@
             <button class="nav-tab" onclick="showTab('posts')">📝 Posts & Scholarships</button>
             <button class="nav-tab" onclick="showTab('workshops')">🎯 Manage Workshops</button>
             <button class="nav-tab" onclick="showTab('services')">💰 Manage Services</button>
+            <button class="nav-tab" onclick="showTab('expert_guidance')">🎬 Expert Guidance</button>
             <button class="nav-tab" onclick="showTab('bookings')">📋 View Bookings</button>
             <button class="nav-tab" onclick="showTab('site_settings')">🌐 Site Settings</button>
         </div>
@@ -400,11 +445,11 @@
                                 <span style="color: var(--text-light);">No image</span>
                             </td>
                             <td>
-                                <a href="{{ url_for('edit_scholarship', scholarship_id=scholarship.id) }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 8px;">
+                                <a href="{{ url_for('edit_scholarship', scholarship_id=scholarship.id) }}" class="btn btn-primary btn-sm" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 8px;">
                                     Edit
                                 </a>
                                 <form method="POST" action="{{ url_for('delete_scholarship', scholarship_id=scholarship.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this scholarship?');">
-                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.85rem;">
+                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 6px 12px; font-size: 0.85rem;">
                                         Delete
                                     </button>
                                 </form>
@@ -562,22 +607,22 @@
                             </td>
                             <td>
                                 {% if service.is_active %}
-                                <span style="background: #e8f5e8; color: var(--dark-green); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Active</span>
+                                <span class="status-badge status-active">Active</span>
                                 {% else %}
-                                <span style="background: #f5f5f5; color: #757575; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Inactive</span>
+                                <span class="status-badge status-inactive">Inactive</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn" style="padding: 6px 12px; background: var(--brown); color: white; font-size: 0.8rem;">Edit</a>
+                            <td class="action-buttons">
+                                <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <form method="POST" action="{{ url_for('toggle_service', service_id=service.id) }}" style="display: inline;">
                                     {% if service.is_active %}
-                                    <button type="submit" class="btn" style="padding: 6px 12px; background: #757575; color: white; font-size: 0.8rem;">Deactivate</button>
+                                    <button type="submit" class="btn btn-warning btn-sm">Deactivate</button>
                                     {% else %}
-                                    <button type="submit" class="btn" style="padding: 6px 12px; background: var(--green); color: white; font-size: 0.8rem;">Activate</button>
+                                    <button type="submit" class="btn btn-success btn-sm">Activate</button>
                                     {% endif %}
                                 </form>
                                 <form method="POST" action="{{ url_for('delete_service', service_id=service.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this service?');">
-                                    <button type="submit" class="btn" style="padding: 6px 12px; background: var(--danger); color: white; font-size: 0.8rem;">Delete</button>
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
                             </td>
                         </tr>
@@ -586,6 +631,112 @@
                 </table>
                 {% else %}
                 <p>No services found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Expert Guidance Tab -->
+        <div id="expert_guidance" class="tab-content">
+            <div class="dashboard-section">
+                <h2>🎬 Add New Expert Guidance Video</h2>
+                <form method="POST" action="{{ url_for('admin_add_expert_guidance') }}">
+                    <div class="form-group">
+                        <label for="title">Video Title *</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="video_url">Video URL *</label>
+                        <input type="url" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." required>
+                        <small>YouTube, Vimeo, or any embeddable video URL</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="6" placeholder="Detailed description of the video content"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="content_format">Content Format</label>
+                        <select id="content_format" name="content_format">
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <input type="text" id="category" name="category" value="General" placeholder="e.g., Germany, Poland, Work-Study, Visa Tips">
+                    </div>
+                    <div class="form-group">
+                        <label for="slug">URL Slug (optional)</label>
+                        <input type="text" id="slug" name="slug" placeholder="auto-generated if left empty">
+                        <small>URL-friendly version of the title</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="meta_description">Meta Description (SEO)</label>
+                        <textarea id="meta_description" name="meta_description" rows="2" placeholder="Brief description for search engines (max 300 chars)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="keywords">Keywords (SEO)</label>
+                        <input type="text" id="keywords" name="keywords" placeholder="video, guidance, europe, study, work">
+                        <small>Comma-separated keywords for SEO</small>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" name="is_active" checked>
+                            <span>Active (visible to public)</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Video</button>
+                </form>
+            </div>
+
+            <div class="dashboard-section">
+                <h2>🎥 Existing Expert Guidance Videos</h2>
+                {% if expert_guidance_videos %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in expert_guidance_videos %}
+                        <tr>
+                            <td>{{ video.id }}</td>
+                            <td>
+                                <strong>{{ video.title }}</strong><br>
+                                <small style="color: var(--text-light);">{{ video.video_url[:50] }}{% if video.video_url|length > 50 %}...{% endif %}</small>
+                            </td>
+                            <td><span style="background: var(--cream); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ video.category }}</span></td>
+                            <td>
+                                {% if video.is_active %}
+                                <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ video.created_at.strftime('%Y-%m-%d') if video.created_at else 'N/A' }}</td>
+                            <td class="action-buttons">
+                                <a href="{{ url_for('admin_edit_expert_guidance', video_id=video.id) }}" class="btn btn-primary btn-sm">Edit</a>
+                                <form method="POST" action="{{ url_for('admin_toggle_expert_guidance', video_id=video.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        {% if video.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_delete_expert_guidance', video_id=video.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this video?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                                <a href="{{ url_for('expert_guidance_detail', slug=video.slug) }}" target="_blank" class="btn btn-sm" style="background: var(--brown); color: white;">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No expert guidance videos found. Add your first video above!</p>
                 {% endif %}
             </div>
         </div>

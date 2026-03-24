@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Expert Guidance - Work & Study in Europe{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" style="text-align: center; padding: 2rem 1rem; background: linear-gradient(135deg, var(--cream) 0%, var(--light-brown) 100%); border-radius: 15px; margin: 1.5rem 0;">
+    <h2 style="color: var(--dark-green); font-size: 2.5rem; margin-bottom: 0.75rem; font-weight: 700;">Expert Guidance Videos</h2>
+    <p style="color: var(--text-dark); font-size: 1.1rem;">Watch our expert videos for valuable insights on working and studying in Europe</p>
+</section>
+
+{% if videos_by_category %}
+    {% for category, videos in videos_by_category.items() %}
+        <section style="margin: 2rem 0; font-family: Georgia, 'Times New Roman', serif;">
+            <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">{{ category }}</h3>
+            <div class="videos-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                {% for video in videos %}
+                <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); overflow: hidden; transition: transform 0.3s ease;">
+                    <div class="video-thumbnail" style="position: relative; background: #000; height: 200px; overflow: hidden;">
+                        {% if video.video_url %}
+                            {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
+                                {% set video_id = video.video_url.split('/')[-1] %}
+                                <iframe 
+                                    src="https://www.youtube.com/embed/{{ video_id }}?autoplay=0&controls=0&modestbranding=1"
+                                    style="width: 100%; height: 100%; border: 0; pointer-events: none;"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                                </iframe>
+                            {% else %}
+                                <iframe 
+                                    src="{{ video.video_url }}?autoplay=0"
+                                    style="width: 100%; height: 100%; border: 0; pointer-events: none;"
+                                    frameborder="0">
+                                </iframe>
+                            {% endif %}
+                        {% endif %}
+                        <div class="play-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+                            <div style="width: 50px; height: 50px; background: rgba(46, 125, 50, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">▶</div>
+                        </div>
+                    </div>
+                    <div class="video-info" style="padding: 1.5rem;">
+                        <h4 style="color: var(--dark-green); margin-top: 0; font-weight: 600; margin-bottom: 0.75rem;">
+                            <a href="{{ url_for('expert_guidance_detail', slug=video.slug) }}" style="color: var(--dark-green); text-decoration: none;">
+                                {{ video.title }}
+                            </a>
+                        </h4>
+                        <div class="video-description" style="color: var(--text-dark); line-height: 1.6; margin-bottom: 1rem;">
+                            {{ video.meta_description or video.description[:120] }}{% if video.description and video.description|length > 120 %}...{% endif %}
+                        </div>
+                        <div class="video-meta" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--light-brown); padding-top: 0.75rem;">
+                            <span class="video-category" style="background: var(--cream); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; color: var(--dark-green);">{{ video.category }}</span>
+                            <small style="color: var(--text-light);">{{ video.created_at.strftime('%b %d, %Y') if video.created_at else 'Unknown date' }}</small>
+                        </div>
+                        <a href="{{ url_for('expert_guidance_detail', slug=video.slug) }}" class="btn btn-primary" style="margin-top: 1rem; display: inline-block; padding: 0.5rem 1rem; font-size: 0.9rem;">Watch Video →</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+{% else %}
+    <section style="margin: 2rem 0; text-align: center;">
+        <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); padding: 3rem; max-width: 600px; margin: 0 auto;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="1" style="margin-bottom: 1rem;">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                <line x1="8" y1="2" x2="8" y2="22"/>
+                <line x1="16" y1="2" x2="16" y2="22"/>
+                <line x1="2" y1="8" x2="22" y2="8"/>
+                <line x1="2" y1="16" x2="22" y2="16"/>
+            </svg>
+            <h3 style="color: var(--dark-green); margin-bottom: 1rem;">Coming Soon</h3>
+            <p style="color: var(--text-light);">Expert guidance videos are being prepared. Check back soon for valuable insights!</p>
+        </div>
+    </section>
+{% endif %}
+
+<!-- Pagination/View All Section -->
+{% if videos_by_category %}
+<div style="text-align: center; margin-top: 2rem;">
+    <span style="color: var(--text-light); font-size: 0.9rem;">
+        Total videos: 
+        {% set total = 0 %}
+        {% for videos in videos_by_category.values() %}
+            {% set total = total + videos|length %}
+        {% endfor %}
+        {{ total }}
+    </span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Video card hover effect */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(141, 110, 99, 0.15);
+}
+
+.card:hover .play-overlay {
+    opacity: 1;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .videos-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.2rem !important;
+    }
+    
+    .hero h2 {
+        font-size: 1.8rem !important;
+    }
+    
+    .hero p {
+        font-size: 1rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    .video-info {
+        padding: 1rem !important;
+    }
+    
+    .video-info h4 {
+        font-size: 1rem !important;
+    }
+}
+</style>
+{% endblock %}

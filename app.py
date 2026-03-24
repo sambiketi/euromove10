@@ -181,6 +181,19 @@ class Scholarship(db.Model):
             'span': ['class']
         }
         return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
+    
+class ExpertGuidance(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(200), unique=True, nullable=True)
+    video_url = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    content_format = db.Column(db.String(10), default='html')
+    category = db.Column(db.String(50), default='General')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    meta_description = db.Column(db.String(300), nullable=True)
+    keywords = db.Column(db.String(500), nullable=True)
 
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -494,6 +507,8 @@ def index():
     services = Service.query.filter_by(is_active=True).order_by(Service.created_at.asc()).limit(3).all()
     # Get admin contact info
     admin = Admin.query.first()
+    # Add this line with the other queries
+    expert_guidance_videos = ExpertGuidance.query.order_by(ExpertGuidance.created_at.desc()).all()
     # Fetch gallery images
     rows = db.session.execute(db.text("""
     SELECT item_id, source, image_url, title, created_at
@@ -754,6 +769,186 @@ def privacy():
     admin = Admin.query.first()
     return render_template('privacy.html', admin=admin, datetime=datetime, SITE_URL=SITE_URL)
 
+# --- EXPERT GUIDANCE ROUTES ---
+# Public listing page
+@app.route('/expert-guidance')
+def expert_guidance():
+    """Display all active expert guidance videos grouped by category"""
+    all_videos = ExpertGuidance.query.filter_by(is_active=True).order_by(ExpertGuidance.created_at.desc()).all()
+    
+    # Group by category
+    videos_by_category = {}
+    for video in all_videos:
+        category = video.category or 'General'
+        if category not in videos_by_category:
+            videos_by_category[category] = []
+        videos_by_category[category].append(video)
+    
+    return render_template('expert_guidance.html', 
+                         videos_by_category=videos_by_category, 
+                         datetime=datetime, 
+                         SITE_URL=SITE_URL)
+
+
+# Individual video page
+@app.route('/expert-guidance/<slug>')
+def expert_guidance_detail(slug):
+    """Display a single expert guidance video"""
+    # Find by slug
+    video = ExpertGuidance.query.filter_by(slug=slug, is_active=True).first()
+    
+    if not video:
+        # Try to find by title slug fallback
+        all_videos = ExpertGuidance.query.filter_by(is_active=True).all()
+        for v in all_videos:
+            if create_slug(v.title) == slug:
+                video = v
+                break
+    
+    if not video:
+        from flask import abort
+        abort(404)
+    
+    return render_template('expert_guidance_detail.html', 
+                         video=video, 
+                         datetime=datetime, 
+                         SITE_URL=SITE_URL)
+
+
+# --- ADMIN EXPERT GUIDANCE MANAGEMENT ---
+@app.route('/admin/expert-guidance/add', methods=['GET', 'POST'])
+def admin_add_expert_guidance():
+    """Add new expert guidance video"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        video_url = request.form.get('video_url', '').strip()
+        description = request.form.get('description', '').strip()
+        content_format = request.form.get('content_format', 'html')
+        category = request.form.get('category', 'General').strip()
+        slug = request.form.get('slug', '').strip() or None
+        meta_description = request.form.get('meta_description', '').strip() or None
+        keywords = request.form.get('keywords', '').strip() or None
+        is_active = 'is_active' in request.form
+        
+        if not title or not video_url:
+            flash("Title and video URL are required", "danger")
+        else:
+            try:
+                # Auto-generate slug if not provided
+                if not slug:
+                    slug = create_slug(title)
+                    # Ensure uniqueness
+                    existing = ExpertGuidance.query.filter_by(slug=slug).first()
+                    if existing:
+                        slug = f"{slug}-{int(datetime.now().timestamp())}"
+                
+                video = ExpertGuidance(
+                    title=title,
+                    slug=slug,
+                    video_url=video_url,
+                    description=description,
+                    content_format=content_format,
+                    category=category,
+                    is_active=is_active,
+                    meta_description=meta_description,
+                    keywords=keywords
+                )
+                db.session.add(video)
+                db.session.commit()
+                flash(f'Expert guidance "{title}" added successfully', 'success')
+                return redirect(url_for('admin_dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding expert guidance: {e}', 'danger')
+    
+    return render_template('admin_add_expert_guidance.html', SITE_URL=SITE_URL)
+
+
+@app.route('/admin/expert-guidance/edit/<int:video_id>', methods=['GET', 'POST'])
+def admin_edit_expert_guidance(video_id):
+    """Edit existing expert guidance video"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    video = ExpertGuidance.query.get_or_404(video_id)
+    
+    if request.method == 'POST':
+        video.title = request.form.get('title', '').strip()
+        video.video_url = request.form.get('video_url', '').strip()
+        video.description = request.form.get('description', '').strip()
+        video.content_format = request.form.get('content_format', 'html')
+        video.category = request.form.get('category', 'General').strip()
+        video.meta_description = request.form.get('meta_description', '').strip() or None
+        video.keywords = request.form.get('keywords', '').strip() or None
+        video.is_active = 'is_active' in request.form
+        
+        # Handle slug
+        new_slug = request.form.get('slug', '').strip()
+        if new_slug and new_slug != video.slug:
+            # Check uniqueness
+            existing = ExpertGuidance.query.filter_by(slug=new_slug).first()
+            if existing and existing.id != video.id:
+                flash('Slug already exists, please use a different one', 'danger')
+                return render_template('admin_edit_expert_guidance.html', video=video, SITE_URL=SITE_URL)
+            video.slug = new_slug
+        elif not new_slug:
+            video.slug = create_slug(video.title)
+        
+        if not video.title or not video.video_url:
+            flash("Title and video URL are required", "danger")
+        else:
+            try:
+                db.session.commit()
+                flash(f'Expert guidance "{video.title}" updated successfully', 'success')
+                return redirect(url_for('admin_dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error updating expert guidance: {e}', 'danger')
+    
+    return render_template('admin_edit_expert_guidance.html', video=video, SITE_URL=SITE_URL)
+
+
+@app.route('/admin/expert-guidance/delete/<int:video_id>', methods=['POST'])
+def admin_delete_expert_guidance(video_id):
+    """Delete expert guidance video"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    video = ExpertGuidance.query.get_or_404(video_id)
+    
+    try:
+        title = video.title
+        db.session.delete(video)
+        db.session.commit()
+        flash(f'Expert guidance "{title}" deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting expert guidance: {e}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/expert-guidance/toggle/<int:video_id>', methods=['POST'])
+def admin_toggle_expert_guidance(video_id):
+    """Toggle active status of expert guidance video"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    video = ExpertGuidance.query.get_or_404(video_id)
+    video.is_active = not video.is_active
+    
+    try:
+        db.session.commit()
+        status = "activated" if video.is_active else "deactivated"
+        flash(f'Expert guidance "{video.title}" {status} successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error toggling status: {e}', 'danger')
+    
+    return redirect(url_for('admin_dashboard'))
 
 # --- ADMIN LOGIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -940,24 +1135,25 @@ def admin_dashboard():
                     db.session.rollback()
                     flash(f"Error deleting site settings: {e}", "danger")
 
-    # Fetch all data for dashboard
-    posts = Post.query.order_by(Post.date_posted.desc()).all()
-    scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
-    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
-    services = Service.query.order_by(Service.created_at.desc()).all()
-    bookings = Booking.query.order_by(Booking.created_at.desc()).all()
-    site_settings = SiteSettings.query.first()
-    return render_template('admin_dashboard.html', 
-                         posts=posts, 
-                         scholarships=scholarships,
-                         workshops=workshops, 
-                         services=services,
-                         bookings=bookings,
-                         admin=admin,
-                         site_settings=site_settings,
-                         datetime=datetime,
-                         SITE_URL=SITE_URL)
-
+   # Fetch all data for dashboard
+posts = Post.query.order_by(Post.date_posted.desc()).all()
+scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
+workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+services = Service.query.order_by(Service.created_at.desc()).all()
+bookings = Booking.query.order_by(Booking.created_at.desc()).all()
+expert_guidance_videos = ExpertGuidance.query.order_by(ExpertGuidance.created_at.desc()).all()
+site_settings = SiteSettings.query.first()
+return render_template('admin_dashboard.html', 
+                     posts=posts, 
+                     scholarships=scholarships,
+                     workshops=workshops, 
+                     services=services,
+                     bookings=bookings,
+                     expert_guidance_videos=expert_guidance_videos,
+                     admin=admin,
+                     site_settings=site_settings,
+                     datetime=datetime,
+                     SITE_URL=SITE_URL)
 
 # --- ADMIN SERVICE MANAGEMENT ---
 @app.route('/admin/service/edit/<int:service_id>', methods=['GET', 'POST'])
