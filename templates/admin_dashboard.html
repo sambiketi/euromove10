@@ -249,6 +249,25 @@
             padding: 6px 12px;
             font-size: 0.8rem;
         }
+        .help-text {
+            display: block;
+            margin-top: 0.25rem;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+        .url-examples {
+            background: var(--cream);
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .url-examples code {
+            background: white;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
         @media (max-width: 768px) {
             .nav-tab {
                 padding: 10px 15px;
@@ -342,7 +361,7 @@
                     <div class="form-group">
                         <label for="post_slug">URL Slug (optional):</label>
                         <input type="text" id="post_slug" name="post_slug" placeholder="my-post-title">
-                        <small style="color: var(--text-light);">Leave empty to auto-generate from title</small>
+                        <small class="help-text">Leave empty to auto-generate from title</small>
                     </div>
                     <div class="form-group">
                         <label for="post_meta_description">Meta Description (optional):</label>
@@ -351,7 +370,7 @@
                     <div class="form-group">
                         <label for="post_keywords">Keywords (optional):</label>
                         <input type="text" id="post_keywords" name="post_keywords" placeholder="keyword1, keyword2, keyword3">
-                        <small style="color: var(--text-light);">Comma-separated keywords for SEO</small>
+                        <small class="help-text">Comma-separated keywords for SEO</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Post</button>
                 </form>
@@ -378,7 +397,7 @@
                     <div class="form-group">
                         <label for="scholarship_slug">URL Slug (optional):</label>
                         <input type="text" id="scholarship_slug" name="scholarship_slug" placeholder="my-scholarship-title">
-                        <small style="color: var(--text-light);">Leave empty to auto-generate from title</small>
+                        <small class="help-text">Leave empty to auto-generate from title</small>
                     </div>
                     <div class="form-group">
                         <label for="scholarship_meta_description">Meta Description (optional):</label>
@@ -387,7 +406,7 @@
                     <div class="form-group">
                         <label for="scholarship_keywords">Keywords (optional):</label>
                         <input type="text" id="scholarship_keywords" name="scholarship_keywords" placeholder="scholarship, funding, europe, study">
-                        <small style="color: var(--text-light);">Comma-separated keywords for SEO</small>
+                        <small class="help-text">Comma-separated keywords for SEO</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Scholarship</button>
                 </form>
@@ -491,7 +510,7 @@
                     <div class="form-group">
                         <label for="workshop_slug">URL Slug (optional):</label>
                         <input type="text" id="workshop_slug" name="workshop_slug" placeholder="my-workshop-title">
-                        <small style="color: var(--text-light);">Leave empty to auto-generate from title</small>
+                        <small class="help-text">Leave empty to auto-generate from title</small>
                     </div>
                     <div class="form-group">
                         <label for="workshop_meta_description">Meta Description (optional):</label>
@@ -500,7 +519,7 @@
                     <div class="form-group">
                         <label for="workshop_keywords">Keywords (optional):</label>
                         <input type="text" id="workshop_keywords" name="workshop_keywords" placeholder="workshop, training, europe, career">
-                        <small style="color: var(--text-light);">Comma-separated keywords for SEO</small>
+                        <small class="help-text">Comma-separated keywords for SEO</small>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Workshop</button>
                 </form>
@@ -646,12 +665,20 @@
                     </div>
                     <div class="form-group">
                         <label for="video_url">Video URL *</label>
-                        <input type="url" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." required>
-                        <small>YouTube, Vimeo, or any embeddable video URL</small>
+                        <input type="url" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." required>
+                        <small class="help-text">Supported formats:</small>
+                        <div class="url-examples">
+                            <strong>YouTube examples:</strong><br>
+                            <code>https://youtu.be/QsRpqVwIJeg</code><br>
+                            <code>https://www.youtube.com/watch?v=QsRpqVwIJeg</code><br>
+                            <code>https://www.youtube.com/embed/QsRpqVwIJeg</code><br>
+                            <strong>Vimeo or other:</strong> Any direct video URL works
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
                         <textarea id="description" name="description" rows="6" placeholder="Detailed description of the video content"></textarea>
+                        <small class="help-text">You can use HTML or Markdown (based on format selected below)</small>
                     </div>
                     <div class="form-group">
                         <label for="content_format">Content Format</label>
@@ -663,11 +690,12 @@
                     <div class="form-group">
                         <label for="category">Category</label>
                         <input type="text" id="category" name="category" value="General" placeholder="e.g., Germany, Poland, Work-Study, Visa Tips">
+                        <small class="help-text">Videos will be grouped by category on the public page</small>
                     </div>
                     <div class="form-group">
                         <label for="slug">URL Slug (optional)</label>
                         <input type="text" id="slug" name="slug" placeholder="auto-generated if left empty">
-                        <small>URL-friendly version of the title</small>
+                        <small class="help-text">URL-friendly version of the title (e.g., "germany-work-visa")</small>
                     </div>
                     <div class="form-group">
                         <label for="meta_description">Meta Description (SEO)</label>
@@ -676,7 +704,7 @@
                     <div class="form-group">
                         <label for="keywords">Keywords (SEO)</label>
                         <input type="text" id="keywords" name="keywords" placeholder="video, guidance, europe, study, work">
-                        <small>Comma-separated keywords for SEO</small>
+                        <small class="help-text">Comma-separated keywords for SEO</small>
                     </div>
                     <div class="form-group">
                         <label style="display: flex; align-items: center; gap: 8px;">
@@ -695,7 +723,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Title</th>
+                            <th>Title & URL</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -708,7 +736,7 @@
                             <td>{{ video.id }}</td>
                             <td>
                                 <strong>{{ video.title }}</strong><br>
-                                <small style="color: var(--text-light);">{{ video.video_url[:50] }}{% if video.video_url|length > 50 %}...{% endif %}</small>
+                                <small style="color: var(--text-light); font-size: 0.7rem;">{{ video.video_url[:60] }}{% if video.video_url|length > 60 %}...{% endif %}</small>
                             </td>
                             <td><span style="background: var(--cream); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ video.category }}</span></td>
                             <td>

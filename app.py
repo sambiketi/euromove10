@@ -194,7 +194,45 @@ class ExpertGuidance(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
     meta_description = db.Column(db.String(300), nullable=True)
     keywords = db.Column(db.String(500), nullable=True)
-
+    
+    def get_embed_url(self):
+        """Convert video URL to embeddable format"""
+        if 'youtube.com' in self.video_url or 'youtu.be' in self.video_url:
+            # Extract video ID
+            video_id = None
+            
+            # Handle youtu.be format
+            if 'youtu.be' in self.video_url:
+                video_id = self.video_url.split('/')[-1].split('?')[0]
+            # Handle youtube.com/watch?v= format
+            elif 'watch?v=' in self.video_url:
+                video_id = self.video_url.split('watch?v=')[1].split('&')[0]
+            # Handle youtube.com/embed/ format
+            elif '/embed/' in self.video_url:
+                video_id = self.video_url.split('/embed/')[1].split('?')[0]
+            
+            if video_id:
+                return f"https://www.youtube.com/embed/{video_id}"
+        
+        # Return original URL if not YouTube or couldn't extract ID
+        return self.video_url
+    
+    def get_embed_html(self, width=560, height=315):
+        """Generate full embed HTML code"""
+        embed_url = self.get_embed_url()
+        
+        if 'youtube.com/embed' in embed_url:
+            return f'''<iframe width="{width}" height="{height}" 
+                src="{embed_url}" 
+                title="{self.title}" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin" 
+                allowfullscreen>
+            </iframe>'''
+        else:
+            return f'<iframe width="{width}" height="{height}" src="{embed_url}" frameborder="0" allowfullscreen></iframe>'
+        
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)

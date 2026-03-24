@@ -15,25 +15,7 @@
 <!-- Video Player Section -->
 <section style="margin: 2rem 0;">
     <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1);">
-        {% if video.video_url %}
-            {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
-                {% set video_id = video.video_url.split('/')[-1] %}
-                <iframe 
-                    src="https://www.youtube.com/embed/{{ video_id }}?autoplay=1&rel=0&modestbranding=1"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen>
-                </iframe>
-            {% else %}
-                <iframe 
-                    src="{{ video.video_url }}?autoplay=1"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-                    frameborder="0"
-                    allowfullscreen>
-                </iframe>
-            {% endif %}
-        {% endif %}
+        {{ video.get_embed_html(560, 315)|safe }}
     </div>
 </section>
 
@@ -72,32 +54,6 @@
         </div>
     </div>
 </section>
-
-<!-- Related Videos Section - Show other videos in same category -->
-{% set related_videos = ExpertGuidance.query.filter(ExpertGuidance.category == video.category, ExpertGuidance.id != video.id, ExpertGuidance.is_active == True).limit(3).all() %}
-{% if related_videos %}
-<section style="margin: 2rem 0;">
-    <h3 style="color: var(--dark-green); border-left: 4px solid var(--green); padding-left: 15px; font-weight: 600;">More Videos in {{ video.category }}</h3>
-    <div class="related-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
-        {% for related in related_videos %}
-        <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); overflow: hidden;">
-            <div style="padding: 1.5rem;">
-                <h4 style="color: var(--dark-green); margin-top: 0; font-size: 1.1rem;">
-                    <a href="{{ url_for('expert_guidance_detail', slug=related.slug) }}" style="color: var(--dark-green); text-decoration: none;">
-                        {{ related.title }}
-                    </a>
-                </h4>
-                <p style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem;">
-                    {{ related.meta_description or related.description[:80] }}{% if related.description and related.description|length > 80 %}...{% endif %}
-                </p>
-                <a href="{{ url_for('expert_guidance_detail', slug=related.slug) }}" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.85rem;">Watch Now →</a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
 {% endblock %}
 
 {% block extra_css %}
@@ -114,11 +70,6 @@
     
     .video-description {
         font-size: 1rem !important;
-    }
-    
-    .related-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1rem !important;
     }
 }
 

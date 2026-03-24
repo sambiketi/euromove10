@@ -17,23 +17,12 @@
                 {% for video in videos %}
                 <div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(141, 110, 99, 0.1); overflow: hidden; transition: transform 0.3s ease;">
                     <div class="video-thumbnail" style="position: relative; background: #000; height: 200px; overflow: hidden;">
-                        {% if video.video_url %}
-                            {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
-                                {% set video_id = video.video_url.split('/')[-1] %}
-                                <iframe 
-                                    src="https://www.youtube.com/embed/{{ video_id }}?autoplay=0&controls=0&modestbranding=1"
-                                    style="width: 100%; height: 100%; border: 0; pointer-events: none;"
-                                    frameborder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                                </iframe>
-                            {% else %}
-                                <iframe 
-                                    src="{{ video.video_url }}?autoplay=0"
-                                    style="width: 100%; height: 100%; border: 0; pointer-events: none;"
-                                    frameborder="0">
-                                </iframe>
-                            {% endif %}
-                        {% endif %}
+                        <iframe 
+                            src="{{ video.get_embed_url() }}?autoplay=0&controls=0&modestbranding=1"
+                            style="width: 100%; height: 100%; border: 0; pointer-events: none;"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                        </iframe>
                         <div class="play-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
                             <div style="width: 50px; height: 50px; background: rgba(46, 125, 50, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">▶</div>
                         </div>
