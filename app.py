@@ -1134,27 +1134,25 @@ def admin_dashboard():
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Error deleting site settings: {e}", "danger")
-
-   # Fetch all data for dashboard
-posts = Post.query.order_by(Post.date_posted.desc()).all()
-scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
-workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
-services = Service.query.order_by(Service.created_at.desc()).all()
-bookings = Booking.query.order_by(Booking.created_at.desc()).all()
-expert_guidance_videos = ExpertGuidance.query.order_by(ExpertGuidance.created_at.desc()).all()
-site_settings = SiteSettings.query.first()
-return render_template('admin_dashboard.html', 
-                     posts=posts, 
-                     scholarships=scholarships,
-                     workshops=workshops, 
-                     services=services,
-                     bookings=bookings,
-                     expert_guidance_videos=expert_guidance_videos,
-                     admin=admin,
-                     site_settings=site_settings,
-                     datetime=datetime,
-                     SITE_URL=SITE_URL)
-
+    # Fetch all data for dashboard
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    scholarships = Scholarship.query.order_by(Scholarship.date_posted.desc()).all()
+    workshops = Workshop.query.order_by(Workshop.date_posted.desc()).all()
+    services = Service.query.order_by(Service.created_at.desc()).all()
+    bookings = Booking.query.order_by(Booking.created_at.desc()).all()
+    expert_guidance_videos = ExpertGuidance.query.order_by(ExpertGuidance.created_at.desc()).all()
+    site_settings = SiteSettings.query.first()
+    return render_template('admin_dashboard.html', 
+                         posts=posts, 
+                         scholarships=scholarships,
+                         workshops=workshops, 
+                         services=services,
+                         bookings=bookings,
+                         expert_guidance_videos=expert_guidance_videos,
+                         admin=admin,
+                         site_settings=site_settings,
+                         datetime=datetime,
+                         SITE_URL=SITE_URL)
 # --- ADMIN SERVICE MANAGEMENT ---
 @app.route('/admin/service/edit/<int:service_id>', methods=['GET', 'POST'])
 def edit_service(service_id):
